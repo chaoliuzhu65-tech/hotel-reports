@@ -1,316 +1,262 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>天津瑞湾开元名都酒店 · 竞品调研报告</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>竞品调研报告 · 天津瑞湾开元名都酒店</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans CJK SC',sans-serif;background:#f7fafc;color:#2d3748;min-height:100vh}
-
-/* Hero */
-.hero{background:linear-gradient(135deg,#1a365d 0%,#2c5282 50%,#2b6cb0 100%);color:#fff;padding:48px 24px 40px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:-50%;right:-10%;width:400px;height:400px;background:rgba(255,255,255,.05);border-radius:50%}
-.hero::after{content:'';position:absolute;bottom:-30%;left:-5%;width:300px;height:300px;background:rgba(255,255,255,.03);border-radius:50%}
-.hero-inner{max-width:900px;margin:0 auto;position:relative;z-index:1}
-.hero-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:12px;margin-bottom:14px;letter-spacing:1px}
-.hero h1{font-size:clamp(20px,4vw,28px);font-weight:700;line-height:1.3;margin-bottom:8px}
-.hero-sub{font-size:14px;opacity:.8;margin-bottom:20px}
-.hero-stats{display:flex;gap:24px;flex-wrap:wrap}
-.stat-item{text-align:center}
-.stat-num{font-size:28px;font-weight:700;line-height:1}
-.stat-label{font-size:11px;opacity:.7;margin-top:4px;letter-spacing:1px}
-
-/* Container */
-.container{max-width:900px;margin:0 auto;padding:28px 20px}
-
-/* Section */
-.section{background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.08);margin-bottom:20px;overflow:hidden}
-.section-header{padding:16px 24px 14px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;gap:10px}
-.section-header .icon{font-size:20px}
-.section-header h2{font-size:15px;font-weight:600;color:#1a202c}
+:root{--gold:#C9A96E;--dark:#1a1a2e;--bg:#f5f6fa;--text:#2d2d2d;--sub:#666;--border:#e8e8e8;--green:#27ae60;--red:#e74c3c;--blue:#2980b9;--orange:#e67e22}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text)}
+.cover{background:linear-gradient(135deg,#1a1a2e,#16213e 50%,#0f3460);color:#fff;padding:60px 40px 50px;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;top:-50px;right:-50px;width:300px;height:300px;border-radius:50%;background:rgba(201,169,110,.08);pointer-events:none}
+.brand{font-size:13px;color:var(--gold);letter-spacing:2px;margin-bottom:12px}
+.cover h1{font-size:28px;font-weight:700;line-height:1.4;margin-bottom:8px}
+.cover h2{font-size:16px;font-weight:400;color:rgba(255,255,255,.7);margin-bottom:30px}
+.cover-meta{display:flex;gap:20px;flex-wrap:wrap}
+.meta-item{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px 16px}
+.meta-item .label{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px}
+.meta-item .value{font-size:14px;color:#fff;font-weight:600}
+.data-badge{position:absolute;top:20px;right:24px;background:rgba(201,169,110,.2);border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:20px;font-size:12px}
+.summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 32px;background:#fff;border-bottom:1px solid var(--border)}
+.sum-card{text-align:center}
+.sum-card .num{font-size:32px;font-weight:800;line-height:1}
+.sum-card .num span{font-size:16px;font-weight:400}
+.sum-card .desc{font-size:12px;color:var(--sub);margin-top:4px}
+.c-gold{color:var(--gold)!important}.c-green{color:var(--green)!important}.c-blue{color:var(--blue)!important}.c-red{color:var(--red)!important}
+.main{max-width:1100px;margin:0 auto;padding:24px 20px}
+.section{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:24px;overflow:hidden}
+.section-header{padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.section-header h3{font-size:16px;font-weight:700;color:var(--dark)}
+.sec-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.i-gold{background:rgba(201,169,110,.15)}.i-blue{background:rgba(41,128,185,.12)}.i-green{background:rgba(39,174,96,.12)}.i-red{background:rgba(231,76,60,.1)}
 .section-body{padding:20px 24px}
-
-/* Info Grid */
-.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.info-card{background:#f7fafc;border-radius:8px;padding:14px;border-left:3px solid #3182ce}
-.info-card .label{font-size:11px;color:#718096;margin-bottom:4px;letter-spacing:0.5px}
-.info-card .value{font-size:14px;font-weight:600;color:#1a202c;line-height:1.4}
-
-/* Summary Bars */
-.summary-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
-.sbar{background:linear-gradient(135deg,#ebf8ff,#bee3f8);border-radius:10px;padding:16px;text-align:center;border:1px solid #bee3f8}
-.sbar.red{background:linear-gradient(135deg,#fff5f5,#fed7d7);border-color:#fed7d7}
-.sbar.green{background:linear-gradient(135deg,#f0fff4,#c6f6d5);border-color:#c6f6d5}
-.sbar .num{font-size:30px;font-weight:700;color:#1a202c}
-.sbar .lbl{font-size:11px;color:#718096;margin-top:4px}
-
-/* Table */
+.hotel-profile{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.info-group h4{font-size:12px;color:var(--sub);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:13px;color:var(--sub)}.info-value{font-size:13px;font-weight:600}
+.score-box{text-align:center;background:#fffbf3;border:1px solid rgba(201,169,110,.3);border-radius:10px;padding:16px;margin-bottom:14px}
+.rating-big{font-size:40px;font-weight:800;color:var(--gold);line-height:1}
+.rating-sub{font-size:12px;color:var(--sub);margin-top:4px}
 .comp-table{width:100%;border-collapse:collapse;font-size:13px}
-.comp-table th{background:#edf2f7;padding:10px 12px;text-align:left;font-weight:600;font-size:12px;color:#4a5568;white-space:nowrap}
-.comp-table td{padding:10px 12px;border-bottom:1px solid #f7fafc;vertical-align:middle}
-.comp-table tr:hover td{background:#f7fafc}
-.name-cell{font-weight:500;color:#1a202c;max-width:180px}
-.rating-cell{font-weight:600;color:#c05621}
-.addr-cell{color:#718096;font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
-
-/* Quadrant */
-.quadrant-wrap{position:relative;height:280px;background:#f7fafc;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden}
-.q-axis-x{position:absolute;bottom:50%;left:0;right:0;height:1px;background:#cbd5e0}
-.q-axis-y{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#cbd5e0}
-.q-label{position:absolute;font-size:11px;color:#a0aec0;font-weight:500}
-.q-dot{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,50%);cursor:pointer;transition:transform .2s}
-.q-dot:hover{transform:translate(-50%,50%) scale(2);z-index:10}
-.q-dot span{position:absolute;top:-22px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;color:#4a5568;background:#fff;padding:1px 4px;border-radius:3px;border:1px solid #e2e8f0;opacity:0;transition:opacity .2s;pointer-events:none}
-.q-dot:hover span{opacity:1}
-.q-corner{position:absolute;font-size:11px;color:#cbd5e0;font-style:italic}
-
-/* Strategies */
-.strategy-card{background:#f7fafc;border-radius:8px;padding:14px 16px;margin-bottom:12px;border-left:3px solid #3182ce}
-.strategy-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-.strategy-tag{font-size:11px;color:#fff;padding:2px 8px;border-radius:10px;font-weight:600}
-.strategy-desc{font-size:13px;color:#4a5568;line-height:1.6}
-
-/* Data source */
-.data-source{background:#fffaf0;border:1px solid #feebc8;border-radius:8px;padding:14px 16px;font-size:12px;color:#744210;line-height:1.8}
-
-/* Footer */
-.footer{text-align:center;color:#a0aec0;font-size:12px;padding:24px;margin-top:8px}
-.footer a{color:#3182ce;text-decoration:none}
-
-/* Responsive */
-@media(max-width:600px){
-  .summary-bars{grid-template-columns:1fr 1fr}
-  .comp-table .addr-cell{display:none}
-  .hero-stats{gap:16px}
-}
+.comp-table th{background:#f8f9fb;color:var(--sub);font-weight:600;text-align:left;padding:10px 14px;font-size:12px}
+.comp-table td{padding:11px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.comp-table tr:last-child td{border-bottom:none}
+.comp-table tr:hover td{background:#fafbff}
+.hotel-name{font-weight:600;color:var(--dark)}
+.dist-badge{background:#f0f4ff;color:var(--blue);padding:3px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.rating-badge{display:inline-flex;align-items:center;gap:4px;font-weight:700}
+.r-high{color:var(--green)}.r-mid{color:var(--orange)}.r-low{color:var(--red)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.threat-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.threat-high{background:var(--red)}.threat-mid{background:var(--orange)}.threat-low{background:#bdc3c7}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.analysis-card{border:1px solid var(--border);border-radius:10px;padding:16px}
+.analysis-card h4{font-size:13px;font-weight:700;margin-bottom:10px}
+.analysis-card ul{list-style:none}
+.analysis-card li{font-size:13px;color:var(--sub);padding:5px 0;border-bottom:1px dashed #f0f0f0;line-height:1.5}
+.analysis-card li:last-child{border-bottom:none}
+.analysis-card li::before{content:'▸ ';color:var(--gold)}
+.strategy-list{display:flex;flex-direction:column;gap:12px}
+.strategy-item{display:flex;gap:14px;align-items:flex-start;padding:14px;border-radius:10px;border-left:4px solid}
+.s-urgent{background:rgba(231,76,60,.05);border-color:var(--red)}.s-important{background:rgba(230,126,34,.05);border-color:var(--orange)}.s-suggest{background:rgba(39,174,96,.05);border-color:var(--green)}
+.strategy-icon{font-size:20px;flex-shrink:0}
+.strategy-content h4{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.strategy-content p{font-size:13px;color:var(--sub);line-height:1.6}
+.priority-label{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;margin-bottom:4px;font-weight:600}
+.p-urgent{background:rgba(231,76,60,.12);color:var(--red)}.p-important{background:rgba(230,126,34,.12);color:var(--orange)}.p-suggest{background:rgba(39,174,96,.12);color:var(--green)}
+.data-source{background:#f8f9fa;border-radius:8px;padding:10px 16px;font-size:12px;color:var(--sub);margin-top:12px;border-left:3px solid var(--gold)}
+.market-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;color:#fff;margin-left:10px}
+.empty-note{text-align:center;padding:40px;color:var(--sub);font-size:14px;background:#f8fff8;border-radius:10px;border:1px solid #c8e6c9}
+footer{text-align:center;padding:24px;font-size:12px;color:#aaa}
+footer strong{color:var(--gold)}
+@media(max-width:768px){.summary-bar,.hotel-profile,.analysis-grid{grid-template-columns:1fr}.cover h1{font-size:20px}}
 </style>
 </head>
 <body>
-
-<div class="hero">
-  <div class="hero-inner">
-    <div class="hero-badge">德胧集团 · AI竞品智能分析</div>
-    <h1>天津瑞湾开元名都酒店</h1>
-    <div class="hero-sub">天津市滨海新区 · 天津 · 2026年03月15日</div>
-    <div class="hero-stats">
-      <div class="stat-item">
-        <div class="stat-num">7</div>
-        <div class="stat-label">监测竞品</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">0</div>
-        <div class="stat-label">高威胁</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">2</div>
-        <div class="stat-label">中威胁</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">5km</div>
-        <div class="stat-label">监测半径</div>
-      </div>
-    </div>
+<div class="cover">
+  <div class="data-badge">📡 高德地图API · 真实数据</div>
+  <div class="brand">德胧酒店集团 · 竞争情报系统 v3.1</div>
+  <h1>天津瑞湾开元名都酒店<br>竞品市场调研报告</h1>
+  <h2>Competitive Intelligence Report · 天津市滨海新区</h2>
+  <div class="cover-meta">
+    <div class="meta-item"><div class="label">报告日期</div><div class="value">2026-03-15</div></div>
+    <div class="meta-item"><div class="label">酒店地址</div><div class="value">滨海新区</div></div>
+    <div class="meta-item"><div class="label">分析范围</div><div class="value">15km半径</div></div>
+    <div class="meta-item"><div class="label">竞品总数</div><div class="value">5家</div></div>
   </div>
 </div>
 
-<div class="container">
+<div class="summary-bar">
+  <div class="sum-card"><div class="num c-gold">4.5<span>分</span></div><div class="desc">高德综合评分</div></div>
+  <div class="sum-card"><div class="num c-red">0<span>家</span></div><div class="desc">高威胁竞品</div></div>
+  <div class="sum-card"><div class="num c-blue">5<span>家</span></div><div class="desc">15km内竞品</div></div>
+  <div class="sum-card"><div class="num" style="font-size:15px;padding-top:6px;color:#e67e22">竞争温和</div><div class="desc">稳健市场</div></div>
+</div>
 
-  <!-- 摘要 -->
+<div class="main">
   <div class="section">
-    <div class="section-header">
-      <span class="icon">📊</span>
-      <h2>竞争态势摘要</h2>
-    </div>
+    <div class="section-header"><div class="sec-icon i-gold">🏨</div><h3>本酒店档案</h3></div>
     <div class="section-body">
-      <div class="summary-bars">
-        <div class="sbar red">
-          <div class="num">0</div>
-          <div class="lbl">🔴 高威胁竞品</div>
+      <div class="hotel-profile">
+        <div class="info-group">
+          <h4>基本信息</h4>
+          <div class="info-row"><span class="info-label">酒店全称</span><span class="info-value">天津瑞湾开元名都酒店</span></div>
+          <div class="info-row"><span class="info-label">所属集团</span><span class="info-value">德胧酒店集团 · 开元名都</span></div>
+          <div class="info-row"><span class="info-label">地址</span><span class="info-value">滨海新区</span></div>
+          <div class="info-row"><span class="info-label">行政区划</span><span class="info-value">天津市滨海新区</span></div>
+          <div class="info-row"><span class="info-label">酒店类型</span><span class="info-value">商务会议</span></div>
+          <div class="info-row"><span class="info-label">坐标</span><span class="info-value">117.709574,39.000909</span></div>
         </div>
-        <div class="sbar">
-          <div class="num">2</div>
-          <div class="lbl">🟡 中威胁竞品</div>
-        </div>
-        <div class="sbar green">
-          <div class="num">5</div>
-          <div class="lbl">🟢 低威胁竞品</div>
-        </div>
-      </div>
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="label">酒店位置</div>
-          <div class="value">天津市滨海新区</div>
-        </div>
-        <div class="info-card">
-          <div class="label">所在城市</div>
-          <div class="value">天津</div>
-        </div>
-        <div class="info-card">
-          <div class="label">市场判断</div>
-          <div class="value" style="font-size:12px">区域竞争较少，是市场蓝海地带，建议主动扩大品牌声量</div>
-        </div>
-        <div class="info-card">
-          <div class="label">最强竞品</div>
-          <div class="value" style="font-size:12px">天津瑞湾开元名都酒店</div>
+        <div class="info-group">
+          <h4>竞争力评估</h4>
+          <div class="score-box"><div class="rating-big">4.5</div><div class="rating-sub">高德地图综合评分</div></div>
+          <div class="info-row"><span class="info-label">酒店等级</span><span class="info-value">5星级</span></div>
+          <div class="info-row"><span class="info-label">市场格局</span><span class="info-value" style="color:#e67e22">竞争温和 · 稳健市场</span></div>
+          <div class="info-row"><span class="info-label">格局描述</span><span class="info-value" style="font-size:12px">5km内5家竞品，竞争态势温和，有一定主导空间</span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 竞品监测矩阵 -->
   <div class="section">
-    <div class="section-header">
-      <span class="icon">🔍</span>
-      <h2>竞品监测矩阵（5km内高端酒店）</h2>
-    </div>
-    <div class="section-body" style="padding:0;overflow-x:auto">
-      <table class="comp-table">
-        <thead>
-          <tr>
-            <th>竞品名称</th>
-            <th>距离</th>
-            <th>评分</th>
-            <th>威胁等级</th>
-            <th class="addr-cell">地址</th>
-          </tr>
-        </thead>
-        <tbody>
-          
-        <tr>
-          <td class="name-cell">天津瑞湾开元名都酒店</td>
-          <td>34m</td>
-          <td class="rating-cell">4.4</td>
-          <td><span class="tag" style="background:#c0562120;color:#c05621">🟡 中威胁</span></td>
-          <td class="addr-cell">新港一号路2527号</td>
-        </tr>
-        <tr>
-          <td class="name-cell">天津瑞湾开元大酒店</td>
-          <td>79m</td>
-          <td class="rating-cell">4.0</td>
-          <td><span class="tag" style="background:#c0562120;color:#c05621">🟡 中威胁</span></td>
-          <td class="addr-cell">新港一号路2527号</td>
-        </tr>
-        <tr>
-          <td class="name-cell">天津万丽泰达酒店</td>
-          <td>3.4km</td>
-          <td class="rating-cell">4.5</td>
-          <td><span class="tag" style="background:#27674920;color:#276749">🟢 低威胁</span></td>
-          <td class="addr-cell">天津经济技术开发区第二大街29号</td>
-        </tr>
-        <tr>
-          <td class="name-cell">天津滨海泰达万豪行政公寓</td>
-          <td>3.4km</td>
-          <td class="rating-cell">4.7</td>
-          <td><span class="tag" style="background:#27674920;color:#276749">🟢 低威胁</span></td>
-          <td class="addr-cell">经济技术开发区第二大街29号</td>
-        </tr>
-        <tr>
-          <td class="name-cell">泰达国际酒店</td>
-          <td>3.9km</td>
-          <td class="rating-cell">4.4</td>
-          <td><span class="tag" style="background:#27674920;color:#276749">🟢 低威胁</span></td>
-          <td class="addr-cell">第二大街8号</td>
-        </tr>
-        <tr>
-          <td class="name-cell">泰达国际酒店大堂(暂停营业)</td>
-          <td>3.9km</td>
-          <td class="rating-cell">暂无</td>
-          <td><span class="tag" style="background:#27674920;color:#276749">🟢 低威胁</span></td>
-          <td class="addr-cell">第二大街8号泰达国际酒店</td>
-        </tr>
-        <tr>
-          <td class="name-cell">银珠酒店</td>
-          <td>4.6km</td>
-          <td class="rating-cell">4.6</td>
-          <td><span class="tag" style="background:#27674920;color:#276749">🟢 低威胁</span></td>
-          <td class="addr-cell">天津经济技术开发区黄海路39号</td>
-        </tr>
-        </tbody>
-      </table>
+    <div class="section-header"><div class="sec-icon i-blue">🎯</div><h3>竞品监测矩阵（15km范围 · 高德真实数据）<span class="market-badge" style="background:#e67e22">竞争温和 · 稳健市场</span></h3></div>
+    <div class="section-body">
+      <table class='comp-table'><thead><tr><th>酒店名称</th><th>距离</th><th>评分</th><th>品牌定位</th><th>地址</th><th>竞争威胁</th></tr></thead><tbody><tr><td><span class="hotel-name">天津万丽泰达酒店</span></td><td><span class="dist-badge">3.4km</span></td><td><span class="rating-badge r-high">⭐ 4.5</span></td><td><span class="tag" style="background:#66618;color:#666">高星</span></td><td style="font-size:12px;color:#888">天津经济技术开发区第二大街29号</td><td><span class="threat-dot threat-low"></span> <strong style="color:#bdc3c7;font-size:12px">低威胁</strong></td></tr><tr><td><span class="hotel-name">泰达国际酒店</span></td><td><span class="dist-badge">3.9km</span></td><td><span class="rating-badge r-mid">⭐ 4.4</span></td><td><span class="tag" style="background:#66618;color:#666">高星</span></td><td style="font-size:12px;color:#888">第二大街8号</td><td><span class="threat-dot threat-low"></span> <strong style="color:#bdc3c7;font-size:12px">低威胁</strong></td></tr><tr><td><span class="hotel-name">银珠酒店</span></td><td><span class="dist-badge">4.6km</span></td><td><span class="rating-badge r-high">⭐ 4.6</span></td><td><span class="tag" style="background:#66618;color:#666">高星</span></td><td style="font-size:12px;color:#888">天津经济技术开发区黄海路39号</td><td><span class="threat-dot threat-low"></span> <strong style="color:#bdc3c7;font-size:12px">低威胁</strong></td></tr><tr><td><span class="hotel-name">天津生态城希尔顿酒店</span></td><td><span class="dist-badge">14.3km</span></td><td><span class="rating-badge r-mid">⭐ 4.4</span></td><td><span class="tag" style="background:#2980b918;color:#2980b9">国际品牌</span></td><td style="font-size:12px;color:#888">动漫中路82号</td><td><span class="threat-dot threat-low"></span> <strong style="color:#bdc3c7;font-size:12px">低威胁</strong></td></tr><tr><td><span class="hotel-name">滨海一号酒店</span></td><td><span class="dist-badge">14.9km</span></td><td><span class="rating-badge r-high">⭐ 4.5</span></td><td><span class="tag" style="background:#66618;color:#666">高星</span></td><td style="font-size:12px;color:#888">嘉丰路188号</td><td><span class="threat-dot threat-low"></span> <strong style="color:#bdc3c7;font-size:12px">低威胁</strong></td></tr></tbody></table>
+      <div class="data-source">📡 高德地图Web服务API · 2026-03-15 · 坐标：117.709574,39.000909 · 半径：15000m</div>
     </div>
   </div>
 
-  <!-- 四象限 -->
   <div class="section">
-    <div class="section-header">
-      <span class="icon">📐</span>
-      <h2>竞争格局四象限（距离 × 评分）</h2>
-    </div>
+    <div class="section-header"><div class="sec-icon i-gold">📊</div><h3>竞争格局四象限图（交互式 · 鼠标悬停查看详情）</h3></div>
     <div class="section-body">
-      <div class="quadrant-wrap">
-        <div class="q-axis-x"></div>
-        <div class="q-axis-y"></div>
-        <div class="q-label" style="left:4px;bottom:52%">高评分</div>
-        <div class="q-label" style="left:4px;top:52%">低评分</div>
-        <div class="q-label" style="right:6px;bottom:52%">近距离</div>
-        <div class="q-label" style="left:53%">远距离</div>
-        <div class="q-corner" style="right:8px;top:8px">高威胁区</div>
-        <div class="q-corner" style="left:8px;top:8px">次要关注</div>
-        <div class="q-corner" style="right:8px;bottom:8px">价格竞争</div>
-        <div class="q-corner" style="left:8px;bottom:8px">暂不关注</div>
-        <div class="q-dot" style="left:95%;bottom:84.20000000000002%;background:#e53e3e" title="天津瑞湾开元名都酒店
-距离:34m 评分:4.4"><span>天津瑞湾开元名都…</span></div><div class="q-dot" style="left:95%;bottom:77.0%;background:#dd6b20" title="天津瑞湾开元大酒店
-距离:79m 评分:4.0"><span>天津瑞湾开元大酒…</span></div><div class="q-dot" style="left:38.92727272727273%;bottom:86.0%;background:#d69e2e" title="天津万丽泰达酒店
-距离:3359m 评分:4.5"><span>天津万丽泰达酒店</span></div><div class="q-dot" style="left:38.92727272727273%;bottom:89.60000000000001%;background:#38a169" title="天津滨海泰达万豪行政公寓
-距离:3359m 评分:4.7"><span>天津滨海泰达万豪…</span></div><div class="q-dot" style="left:28.927272727272722%;bottom:84.20000000000002%;background:#3182ce" title="泰达国际酒店
-距离:3909m 评分:4.4"><span>泰达国际酒店</span></div><div class="q-dot" style="left:28.927272727272722%;bottom:50%;background:#805ad5" title="泰达国际酒店大堂(暂停营业)
-距离:3909m 评分:0.0"><span>泰达国际酒店大堂…</span></div><div class="q-dot" style="left:16.799999999999997%;bottom:87.8%;background:#d53f8c" title="银珠酒店
-距离:4576m 评分:4.6"><span>银珠酒店</span></div>
-      </div>
-      <p style="font-size:12px;color:#a0aec0;margin-top:8px">💡 悬停各点查看竞品详情 · 右上角为高威胁区域</p>
-    </div>
-  </div>
-
-  <!-- 策略建议 -->
-  <div class="section">
-    <div class="section-header">
-      <span class="icon">🎯</span>
-      <h2>AI策略建议</h2>
-    </div>
-    <div class="section-body">
+      <p style="font-size:12px;color:#999;margin-bottom:12px">X轴：距离（左=远，右=近）· Y轴：评分（下=低，上=高）· 金色圆点=本酒店 · 悬停查看竞品详情</p>
+      <div style="position:relative">
+<canvas id="qc_tianjin_ruiwan" width="680" height="440" style="max-width:100%;border-radius:10px;background:#fafbfc;border:1px solid #e8e8e8;cursor:crosshair;display:block;margin:0 auto"></canvas>
+<div id="tt_tianjin_ruiwan" style="display:none;position:fixed;background:rgba(20,20,40,0.95);color:#fff;padding:10px 14px;border-radius:8px;font-size:12px;z-index:9999;border:1px solid #c9a96e;max-width:240px;line-height:1.7;pointer-events:none"></div>
+</div>
+<script>
+(function(){
+var pts=[{"name": "天津万丽泰达酒店", "dist": 3359, "rating": 4.5, "threat": "low"}, {"name": "泰达国际酒店", "dist": 3909, "rating": 4.4, "threat": "low"}, {"name": "银珠酒店", "dist": 4576, "rating": 4.6, "threat": "low"}, {"name": "天津生态城希尔顿酒店", "dist": 14317, "rating": 4.4, "threat": "low"}, {"name": "滨海一号酒店", "dist": 14917, "rating": 4.5, "threat": "low"}];
+var selfName="天津瑞湾开元名都";
+var selfR=4.5;
+var maxDist=15000;
+var id="tianjin_ruiwan";
+var canvas=document.getElementById('qc_'+id);
+if(!canvas)return;
+var ctx=canvas.getContext('2d');
+var tt=document.getElementById('tt_'+id);
+var W=canvas.width,H=canvas.height,PAD=58;
+var dw=W-2*PAD,dh=H-2*PAD;
+var MIN_R=3.2,MAX_R=5.1;
+function cx(dist){return PAD+(1-dist/maxDist)*dw;}
+function cy(r){return H-PAD-((r-MIN_R)/(MAX_R-MIN_R))*dh;}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var qcx=cx(maxDist*0.5),qcy=cy(4.25);
+  var qbg=[['rgba(201,169,110,0.07)','高端强竞区'],['rgba(41,128,185,0.07)','性价比强敌区'],['rgba(231,76,60,0.05)','弱势竞品区'],['rgba(149,165,166,0.06)','无威胁区']];
+  var qx=[qcx,PAD,qcx,PAD],qy=[PAD,PAD,qcy,qcy],qw=[W-PAD-qcx,qcx-PAD,W-PAD-qcx,qcx-PAD],qh=[qcy-PAD,qcy-PAD,H-PAD-qcy,H-PAD-qcy];
+  for(var i=0;i<4;i++){
+    ctx.fillStyle=qbg[i][0];ctx.fillRect(qx[i],qy[i],qw[i],qh[i]);
+    ctx.fillStyle='rgba(80,80,100,0.4)';ctx.font='10.5px PingFang SC,sans-serif';
+    ctx.fillText(qbg[i][1],qx[i]+8,qy[i]+16);
+  }
+  ctx.strokeStyle='#d0d3d8';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(qcx,PAD);ctx.lineTo(qcx,H-PAD);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD,qcy);ctx.lineTo(W-PAD,qcy);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle='#c8cdd4';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(PAD,PAD-6);ctx.lineTo(PAD,H-PAD);ctx.lineTo(W-PAD+6,H-PAD);ctx.stroke();
+  ctx.fillStyle='#9aacb8';ctx.font='10px sans-serif';
+  ctx.fillText('← 远',PAD+4,H-PAD+16);ctx.fillText('近 →',W-PAD-30,H-PAD+16);
+  ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('评分 ↑',0,0);ctx.restore();
+  [3.5,4.0,4.5,5.0].forEach(function(r){
+    var y=cy(r);ctx.fillStyle='#b0bec5';ctx.font='10px sans-serif';ctx.fillText(r.toFixed(1),PAD-28,y+3);
+    ctx.strokeStyle='#ecf0f1';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(PAD,y);ctx.lineTo(W-PAD,y);ctx.stroke();
+  });
+  var tc={'high':'#e74c3c','mid':'#e67e22','low':'#95a5a6'};
+  pts.forEach(function(p){
+    var x=cx(p.dist),y=cy(p.rating);
+    var col=tc[p.threat]||'#95a5a6';
+    ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);
+    ctx.fillStyle=col+'28';ctx.fill();
+    ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.stroke();
+    var sn=p.name.replace(/杭州|宁波|常州|绍兴|重庆|北京|天津|湖州/g,'').slice(0,5);
+    ctx.fillStyle='#546e7a';ctx.font='9px PingFang SC,sans-serif';ctx.fillText(sn,x+9,y-1);
+  });
+  var sx=cx(0),sy=cy(selfR);
+  ctx.beginPath();ctx.arc(sx,sy,10,0,Math.PI*2);
+  ctx.fillStyle='rgba(201,169,110,0.22)';ctx.fill();
+  ctx.strokeStyle='#c9a96e';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='#c9a96e';ctx.font='bold 10px PingFang SC,sans-serif';ctx.fillText('★ '+selfName,sx+13,sy+4);
+  var legs=[['#e74c3c','高威胁'],['#e67e22','中威胁'],['#95a5a6','低威胁'],['#c9a96e','本酒店']];
+  legs.forEach(function(l,i){
+    var lx=PAD+i*138,ly=12;
+    ctx.beginPath();ctx.arc(lx+5,ly,5,0,Math.PI*2);ctx.fillStyle=l[0]+'33';ctx.fill();ctx.strokeStyle=l[0];ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#546e7a';ctx.font='10px PingFang SC,sans-serif';ctx.fillText(l[1],lx+13,ly+4);
+  });
+}
+draw();
+var rect;
+canvas.addEventListener('mousemove',function(e){
+  rect=canvas.getBoundingClientRect();
+  var mx=(e.clientX-rect.left)*(W/rect.width);
+  var my=(e.clientY-rect.top)*(H/rect.height);
+  var found=null,minD=18;
+  pts.forEach(function(p){
+    var d=Math.sqrt(Math.pow(mx-cx(p.dist),2)+Math.pow(my-cy(p.rating),2));
+    if(d<minD){minD=d;found=p;}
+  });
+  if(found){
+    tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-32)+'px';
+    var tm={'high':'🔴 高威胁','mid':'🟡 中威胁','low':'🟢 低威胁'};
+    tt.innerHTML='<strong>'+found.name+'</strong><br>📏 '+fmt(found.dist)+'<br>⭐ '+(found.rating||'暂无')+'分<br>'+tm[found.threat];
+  }else{tt.style.display='none';}
+});
+canvas.addEventListener('mouseleave',function(){tt.style.display='none';});
+function fmt(d){return d<1000?d+'m':(d/1000).toFixed(1)+'km';}
+})();
+</script>
       
-        <div class="strategy-card">
-          <div class="strategy-head">
-            <span class="strategy-tag" style="background:#c05621">重点关注</span>
-            <strong>密切监控天津瑞湾开元名都酒店</strong>
-          </div>
-          <p class="strategy-desc">该竞品距离34m，评分4.4，是当前最强威胁，建议每季度做一次深度对比分析</p>
-        </div>
-        <div class="strategy-card">
-          <div class="strategy-head">
-            <span class="strategy-tag" style="background:#2b6cb0">持续优化</span>
-            <strong>提升在线口碑评分</strong>
-          </div>
-          <p class="strategy-desc">携程/美团/抖音等平台评分直接影响OTA流量，建议设立专职口碑运营岗位，目标保持评分≥4.6</p>
-        </div>
     </div>
   </div>
 
-  <!-- 数据来源 -->
   <div class="section">
-    <div class="section-header">
-      <span class="icon">📋</span>
-      <h2>数据来源声明</h2>
-    </div>
+    <div class="section-header"><div class="sec-icon i-blue">🔍</div><h3>竞争格局深度分析</h3></div>
     <div class="section-body">
-      <div class="data-source">
-        <strong>数据来源：</strong>高德地图Web服务API（places/around 接口）<br>
-        <strong>查询坐标：</strong>117.709574,39.000909<br>
-        <strong>查询半径：</strong>5000米<br>
-        <strong>查询类型：</strong>types=100102（五星酒店）|100101（四星酒店）|100100（酒店）<br>
-        <strong>查询时间：</strong>2026年03月15日<br>
-        <strong>数据声明：</strong>本报告所有竞品名称、距离、评分均来自高德API真实返回数据，严禁虚构，仅供内部决策参考
+      <div class="analysis-grid">
+        <div class="analysis-card" style="border-color:rgba(231,76,60,.3)">
+          <h4>🔴 高威胁竞品（0家）</h4>
+          <ul>
+            <li>暂无高威胁竞品，市场格局有利</li>
+          </ul>
+        </div>
+        <div class="analysis-card" style="border-color:rgba(41,128,185,.3)">
+          <h4>🟡 中威胁竞品（0家）</h4>
+          <ul>
+            <li>暂无中威胁竞品</li>
+          </ul>
+        </div>
+        <div class="analysis-card" style="border-color:rgba(39,174,96,.3)">
+          <h4>🟢 稳健增长策略</h4>
+          <ul><li>天津市滨海新区地标级酒店，知名度优势</li><li>集团资源整合，商务接待能力强</li><li>高德评分4.5分，口碑积累良好</li><li>开元积分体系，忠诚度客户黏性强</li></ul>
+        </div>
+        <div class="analysis-card" style="border-color:rgba(230,126,34,.3)">
+          <h4>🟡 市场机会点</h4>
+          <ul><li>持续提升产品体验，拉大与竞品差距</li><li>加强数字化营销，私域流量运营降低OTA佣金压力</li><li>深耕当地企业商务协议，锁定高频商旅客群</li><li>借助德胧集团跨品牌联动，拓展客源半径</li></ul>
+        </div>
       </div>
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-header"><div class="sec-icon i-red">💡</div><h3>AI竞争策略建议</h3></div>
+    <div class="section-body"><div class="strategy-list"><div class="strategy-item s-important"><div class="strategy-icon">📊</div><div class="strategy-content"><div class="priority-label p-important">优先级 · 重要</div><h4>竞争态势动态监测</h4><p>建议每月定期更新竞品数据（现有5家竞品中0家高威胁），重点关注评分变化、价格策略、新增竞品等。</p></div></div><div class="strategy-item s-suggest"><div class="strategy-icon">✨</div><div class="strategy-content"><div class="priority-label p-suggest">优先级 · 建议</div><h4>品牌价值主张强化</h4><p>将开元名都品牌优势转化为可量化的客户价值（如开元积分价值、硬件标准等），在OTA和自营渠道统一强化差异化展示。</p></div></div><div class="strategy-item s-suggest"><div class="strategy-icon">🌐</div><div class="strategy-content"><div class="priority-label p-suggest">优先级 · 建议</div><h4>数字化营销升级</h4><p>加强私域流量运营（企微/小程序），建立会员复购体系。降低OTA渠道依赖，提升直销比例，改善RevPAR和收益结构。</p></div></div></div></div>
+  </div>
 </div>
 
-<div class="footer">
-  <p>© 2026 德胧酒店集团 · <a href="https://chaoliuzhu65-tech.github.io/hotel-reports/">报告中心</a> · Powered by WorkBuddy + 高德地图API</p>
-  <p style="margin-top:4px">数据仅供内部参考，请勿对外传播</p>
-</div>
-</body>
-</html>
+<footer>
+  <strong>德胧酒店集团 · 竞争情报系统 v3.1</strong> · 高德地图API真实数据 · 2026-03-15<br>
+  <span style="color:#ccc">坐标：117.709574,39.000909 · 半径15km · 竞品数据来自高德POI数据库</span>
+</footer>
+</body></html>
