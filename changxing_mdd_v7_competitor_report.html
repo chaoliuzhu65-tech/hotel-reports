@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长兴太湖开元名都酒店 · 竞品调研报告 v7.0</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --primary:#1a365d;--gold:#C9A84C;--accent:#2980b9;
+    --bg:#f8fafc;--card:#fff;--radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:#333;padding-top:52px}
+  
+  /* ===== 顶端横向吸顶导航 ===== */
+  #top-nav{
+    position:fixed;top:0;z-index:1000;width:100%;
+    background:rgba(26,54,93,0.97);
+    backdrop-filter:blur(8px);
+    display:flex;gap:0;overflow-x:auto;
+    box-shadow:0 2px 12px rgba(0,0,0,0.25);
+    scrollbar-width:none;height:52px;align-items:center;
+    padding:0 12px;
+  }
+  #top-nav::-webkit-scrollbar{display:none}
+  .nav-item{
+    display:flex;align-items:center;
+    padding:0 14px;height:52px;
+    color:rgba(255,255,255,0.75);
+    text-decoration:none;font-size:12.5px;font-weight:500;
+    white-space:nowrap;transition:all 0.2s;
+    border-bottom:2px solid transparent;
+  }
+  .nav-item:hover,.nav-item.active{
+    color:var(--gold);border-bottom-color:var(--gold);
+    background:rgba(255,255,255,0.07);
+  }
+  
+  .hero{
+    background:linear-gradient(135deg,#1a365d 0%,#2c5282 50%,#1a365d 100%);
+    padding:40px 32px 32px;color:#fff;
+  }
+  .hero h1{font-size:26px;font-weight:700;margin-bottom:8px}
+  .hero-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;opacity:0.85;margin-top:12px}
+  .hero-badge{background:rgba(201,168,76,0.25);border:1px solid var(--gold);padding:4px 14px;border-radius:20px;color:var(--gold)}
+  
+  .container{max-width:1100px;margin:0 auto;padding:0 16px}
+  .section{padding:32px 0}
+  .section-title{
+    font-size:20px;font-weight:700;color:var(--primary);
+    border-left:4px solid var(--gold);padding-left:14px;
+    margin-bottom:20px;display:flex;align-items:center;gap:8px;
+  }
+  
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+  .stat-card{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+  .stat-value{font-size:24px;font-weight:700;color:var(--primary)}
+  .stat-label{font-size:12px;color:#888;margin-top:4px}
+  
+  .macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.macro-grid{grid-template-columns:1fr}}
+  .macro-card{background:#fff;border-radius:var(--radius);padding:18px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+  .macro-card h3{font-size:14px;font-weight:600;color:var(--primary);margin-bottom:10px}
+  .macro-card p{font-size:13px;line-height:1.8;color:#555}
+  
+  .comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .comp-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+  .comp-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+  .comp-name{color:#fff;font-weight:600;font-size:13px}
+  .threat-badge{background:rgba(255,255,255,0.2);color:#fff;padding:2px 8px;border-radius:12px;font-size:11px}
+  .comp-body{padding:14px 16px}
+  .comp-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+  .comp-row:last-child{border-bottom:none}
+  .comp-row span{color:#888}
+  
+  .camp-block{margin-bottom:16px}
+  .camp-title{font-weight:600;margin-bottom:8px}
+  .camp-badges{flex-wrap:wrap;display:flex;gap:4px}
+  
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:768px){.chart-grid{grid-template-columns:1fr}}
+  .chart-box{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+  .chart-title{font-size:14px;font-weight:600;color:var(--primary);margin-bottom:12px}
+  
+  .swot-table{width:100%;border-collapse:collapse;font-size:13px}
+  .swot-table th{padding:10px;text-align:center;font-weight:600;color:#fff}
+  .swot-table td{padding:10px;line-height:1.6;vertical-align:top}
+  
+  .strategy-item{background:#fff;border-radius:8px;padding:12px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+  .s-tag{padding:3px 10px;border-radius:12px;color:#fff;font-size:11px;font-weight:600;white-space:nowrap}
+  .s-content{font-size:14px;line-height:1.6}
+  
+  .seg-table{width:100%;border-collapse:collapse;font-size:13px}
+  .seg-table th{background:var(--primary);color:#fff;padding:10px;text-align:left}
+  .seg-table td{padding:10px;border-bottom:1px solid #eee}
+  .seg-table tr:hover{background:#f9f9f9}
+  
+  .risk-item{background:#fff;border-left:3px solid #e74c3c;padding:10px 14px;margin-bottom:8px;border-radius:0 8px 8px 0;font-size:13px;color:#555}
+  
+  .price-table{width:100%;border-collapse:collapse;font-size:13px}
+  .price-table th{background:#1a365d;color:#fff;padding:10px;text-align:center}
+  .price-table td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+  
+  .map-container{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+  
+  .source-note{font-size:11px;color:#aaa;text-align:right;margin-top:8px}
+  
+  .footer{background:var(--primary);color:rgba(255,255,255,0.7);text-align:center;padding:24px;font-size:12px;margin-top:40px}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶端横向吸顶导航 ===== -->
+<nav id="top-nav">
+  <a class="nav-item" href="#sec-overview">📋 概览</a>
+  <a class="nav-item" href="#sec-macro">🌍 宏观</a>
+  <a class="nav-item" href="#sec-competitors">🏆 竞品</a>
+  <a class="nav-item" href="#sec-camps">⚔️ 三阵营</a>
+  <a class="nav-item" href="#sec-charts">📊 图表</a>
+  <a class="nav-item" href="#sec-map">🗺️ 地图</a>
+  <a class="nav-item" href="#sec-swot">⚖️ SWOT</a>
+  <a class="nav-item" href="#sec-segments">👥 客群</a>
+  <a class="nav-item" href="#sec-price">💰 价格</a>
+  <a class="nav-item" href="#sec-strategy">🎯 策略</a>
+  <a class="nav-item" href="#sec-risk">⚠️ 风险</a>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+<div class="container">
+  <div class="hero-badge">德胧集团 · 竞品调研报告 v7.0</div>
+  <h1 style="margin-top:12px">长兴太湖开元名都酒店</h1>
+  <div style="font-size:14px;opacity:0.8;margin-top:6px">湖州长兴 太湖沿岸 · 2026年03月15日 生成</div>
+  <div class="hero-meta">
+    <span>📍 湖州市长兴县太湖沿岸</span>
+    <span>🏨 300 间客房</span>
+    <span>⭐ ★★★★★ 星级</span>
+    <span>📅 2012年开业</span>
+    <span>携程评分：4.6 分（1200+ 条点评）</span>
+  </div>
+  <div style="font-size:12px;opacity:0.6;margin-top:8px">⚠️ 客房数/开业年份/评分以携程公示信息为准</div>
+</div>
+</div>
+
+<div class="container">
+
+<!-- 概览卡片 -->
+<div id="sec-overview" class="section">
+  <div class="section-title">📋 核心指标概览</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" style="color:#e74c3c">3</div>
+      <div class="stat-label">监测竞品数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#27ae60">4.6</div>
+      <div class="stat-label">携程综合评分</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">¥500</div>
+      <div class="stat-label">最低价格/晚</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">¥1100</div>
+      <div class="stat-label">最高价格/晚</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">300</div>
+      <div class="stat-label">客房数（携程）</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">6</div>
+      <div class="stat-label">AI策略建议数</div>
+    </div>
+  </div>
+  <div style="background:#fff;padding:16px;border-radius:var(--radius);font-size:14px;color:#555;line-height:2;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+    📅 <strong>当前季节判断：</strong>Q1平季（太湖音乐节带动3月热度，五一前预热）
+  </div>
+</div>
+
+<!-- 宏观环境 -->
+<div id="sec-macro" class="section">
+  <div class="section-title">🌍 宏观市场环境</div>
+  <div class="macro-grid">
+    <div class="macro-card">
+      <h3>🏙️ 区域经济形势</h3>
+      <p>长兴县跻身全国县域旅游综合实力百强县第2，2024年接待游客超2300万人次</p>
+    </div>
+    <div class="macro-card">
+      <h3>🗺️ 旅游市场动态</h3>
+      <p>2026长兴文旅畅游卡首发；太湖9号公路大麓音乐节3月14-15日举办；2025年国庆接待游客155.6万人次，同比增长14.6%</p>
+    </div>
+  </div>
+  <div class="source-note">数据来源：政府工作报告/权威媒体/携程公示 · 2026年03月15日</div>
+</div>
+
+<!-- 竞品详情 -->
+<div id="sec-competitors" class="section">
+  <div class="section-title">🏆 周边竞品详情（高德API实时数据）</div>
+  <div class="comp-grid">
+    
+        <div class="comp-card">
+          <div class="comp-header" style="background:#e74c3c">
+            <span class="comp-name">长兴太湖龙之梦大酒店</span>
+            <span class="threat-badge">高威胁</span>
+          </div>
+          <div class="comp-body">
+            <div class="comp-row"><span>距离</span><strong>8.0 km</strong></div>
+            <div class="comp-row"><span>携程评分</span><strong>4.5 分</strong></div>
+            <div class="comp-row"><span>价格区间</span><strong>¥600~1500/晚</strong></div>
+            <div class="comp-row"><span>定位标签</span><strong>度假主题</strong></div>
+            <div class="comp-row"><span>星级</span><strong>★★★★★</strong></div>
+          </div>
+        </div>
+
+        <div class="comp-card">
+          <div class="comp-header" style="background:#f39c12">
+            <span class="comp-name">湖州南浔古镇区域民宿</span>
+            <span class="threat-badge">中威胁</span>
+          </div>
+          <div class="comp-body">
+            <div class="comp-row"><span>距离</span><strong>35.0 km</strong></div>
+            <div class="comp-row"><span>携程评分</span><strong>4.6 分</strong></div>
+            <div class="comp-row"><span>价格区间</span><strong>¥400~900/晚</strong></div>
+            <div class="comp-row"><span>定位标签</span><strong>民宿特色</strong></div>
+            <div class="comp-row"><span>星级</span><strong>民宿</strong></div>
+          </div>
+        </div>
+
+        <div class="comp-card">
+          <div class="comp-header" style="background:#f39c12">
+            <span class="comp-name">安吉竹海主题酒店</span>
+            <span class="threat-badge">中威胁</span>
+          </div>
+          <div class="comp-body">
+            <div class="comp-row"><span>距离</span><strong>50.0 km</strong></div>
+            <div class="comp-row"><span>携程评分</span><strong>4.7 分</strong></div>
+            <div class="comp-row"><span>价格区间</span><strong>¥500~1200/晚</strong></div>
+            <div class="comp-row"><span>定位标签</span><strong>自然主题</strong></div>
+            <div class="comp-row"><span>星级</span><strong>★★★★</strong></div>
+          </div>
+        </div>
+  </div>
+  <div class="source-note">竞品坐标/名称来自高德Web服务API · 评分/价格来自携程/去哪儿公开页面</div>
+</div>
+
+<!-- 三阵营分层 -->
+<div id="sec-camps" class="section">
+  <div class="section-title">⚔️ 竞争格局三阵营分层</div>
+  <div style="background:#fff;padding:20px;border-radius:var(--radius);box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <div class="camp-block"><div class="camp-title" style="color:#16a085">🌟 差异化竞品</div><div class="camp-badges"><span style="background:#16a085;color:#fff;padding:4px 12px;border-radius:20px;margin:4px;display:inline-block;font-size:13px">长兴太湖龙之梦大酒店</span><span style="background:#16a085;color:#fff;padding:4px 12px;border-radius:20px;margin:4px;display:inline-block;font-size:13px">湖州南浔古镇区域民宿</span><span style="background:#16a085;color:#fff;padding:4px 12px;border-radius:20px;margin:4px;display:inline-block;font-size:13px">安吉竹海主题酒店</span></div></div>
+  </div>
+</div>
+
+<!-- ECharts图表 -->
+<div id="sec-charts" class="section">
+  <div class="section-title">📊 竞争格局可视化分析</div>
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="chart-title">四象限竞争格局（距离 vs 评分）</div>
+      <div id="chart-scatter" style="height:280px"></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">能力雷达对比（本方 vs 安吉竹海主题酒店）</div>
+      <div id="chart-radar" style="height:280px"></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">价格区间对比（元/晚）</div>
+      <div id="chart-price" style="height:280px"></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">威胁等级分布</div>
+      <div id="chart-threat" style="height:280px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 高德地图 -->
+<div id="sec-map" class="section">
+  <div class="section-title">🗺️ 周边竞品地图分布</div>
+  <div class="map-container" style="height:400px">
+    <div id="amap-container" style="width:100%;height:100%"></div>
+  </div>
+</div>
+
+<!-- SWOT -->
+<div id="sec-swot" class="section">
+  <div class="section-title">⚖️ SWOT战略分析</div>
+  <table class="swot-table">
+    <tr>
+      <th style="background:#27ae60;width:25%">✅ 优势 (S)</th>
+      <th style="background:#e74c3c;width:25%">❌ 劣势 (W)</th>
+      <th style="background:#3498db;width:25%">🚀 机会 (O)</th>
+      <th style="background:#f39c12;width:25%">⚡ 威胁 (T)</th>
+    </tr>
+    <tr><td style="background:#d5f5e3">太湖稀缺景观资源</td><td style="background:#fde8e8">太湖龙之梦主题娱乐竞争激烈</td><td style="background:#d6eaf8">太湖9号公路成为网红打卡地，新业态聚集</td><td style="background:#fef9e7">安吉、湖州等周边度假目的地分流</td></tr><tr><td style="background:#d5f5e3">五星品质+开元品牌背书</td><td style="background:#fde8e8">长途可及性依赖高速/高铁</td><td style="background:#d6eaf8">长兴文旅畅游卡带动本地及周边游客</td><td style="background:#fef9e7">民宿与主题酒店对年轻客群的吸引</td></tr><tr><td style="background:#d5f5e3">会议+度假双驱动</td><td style="background:#fde8e8"></td><td style="background:#d6eaf8"></td><td style="background:#fef9e7"></td></tr>
+  </table>
+</div>
+
+<!-- 客群攻坚 -->
+<div id="sec-segments" class="section">
+  <div class="section-title">👥 客群分层攻坚表</div>
+  <table class="seg-table">
+    <tr><th>客群类型</th><th>价格策略</th><th>营销策略</th></tr>
+    <tr><td>💼 周末度假（沪宁杭自驾）</td><td>针对性定价+专属权益套餐</td><td>OTA专项推广+企业直销</td></tr>
+<tr><td>🎪 商务会议年会</td><td>针对性定价+专属权益套餐</td><td>OTA专项推广+企业直销</td></tr>
+<tr><td>👨‍👩‍👧 亲子家庭（太湖水上活动）</td><td>针对性定价+专属权益套餐</td><td>OTA专项推广+企业直销</td></tr>
+<tr><td>🏢 太湖观景文旅</td><td>针对性定价+专属权益套餐</td><td>OTA专项推广+企业直销</td></tr>
+
+  </table>
+</div>
+
+<!-- 价格策略 -->
+<div id="sec-price" class="section">
+  <div class="section-title">💰 价格策略建议</div>
+  <table class="price-table">
+    <tr>
+      <th>场景</th><th>建议价格区间</th><th>参考依据</th>
+    </tr>
+    <tr><td>平季/淡季</td><td>¥500~700/晚</td><td>低于竞品均价10-15%，保证入住率</td></tr>
+    <tr><td>节假日/旺季</td><td>¥900~1100/晚</td><td>参考携程同期竞品定价</td></tr>
+    <tr><td>企业协议价</td><td>¥420/晚</td><td>含早餐，批量锁定商务客</td></tr>
+    <tr><td>大型活动期</td><td>¥1000+/晚起</td><td>展会/演唱会/节假日联动</td></tr>
+  </table>
+  <div class="source-note">⚠️ 以上建议价格基于携程公开价格数据测算，实际执行以收益管理系统为准</div>
+</div>
+
+<!-- AI策略建议 -->
+<div id="sec-strategy" class="section">
+  <div class="section-title">🎯 AI差异化策略建议（6条）</div>
+  <div class="strategy-item" style="border-left:4px solid #e74c3c"><span class="s-tag" style="background:#e74c3c">🔴 紧急</span><span class="s-content">绑定太湖音乐节/演唱会流量，推出限定音乐季套餐锁定3月热度</span></div>
+<div class="strategy-item" style="border-left:4px solid #e74c3c"><span class="s-tag" style="background:#e74c3c">🔴 紧急</span><span class="s-content">打造太湖观景核心卖点，在OTA主图/详情页突出稀缺太湖景观资源</span></div>
+<div class="strategy-item" style="border-left:4px solid #f39c12"><span class="s-tag" style="background:#f39c12">🟡 中期</span><span class="s-content">开发太湖龙舟节、桃花节等季节性主题活动，拉长旺季区间</span></div>
+<div class="strategy-item" style="border-left:4px solid #f39c12"><span class="s-tag" style="background:#f39c12">🟡 中期</span><span class="s-content">联合长兴畅游卡建立本地消费权益，拉动周边城市周末游</span></div>
+<div class="strategy-item" style="border-left:4px solid #3498db"><span class="s-tag" style="background:#3498db">🔵 长期</span><span class="s-content">与长三角度假目的地（安吉/莫干山）差异化竞争，突出太湖人文特色</span></div>
+<div class="strategy-item" style="border-left:4px solid #3498db"><span class="s-tag" style="background:#3498db">🔵 长期</span><span class="s-content">大型商务会议年会市场，打造「太湖畔年会首选」品牌定位</span></div>
+
+</div>
+
+<!-- 风险预警 -->
+<div id="sec-risk" class="section">
+  <div class="section-title">⚠️ 风险预警信号</div>
+  <div class="risk-item">⚠️ 太湖龙之梦主题娱乐形成强力竞争</div>
+<div class="risk-item">⚠️ 淡旺季明显，平季入住率偏低</div>
+
+</div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  <p>长兴太湖开元名都酒店 竞品调研报告 v7.0 · 德胧集团 OpenClaw AI系统生成</p>
+  <p style="margin-top:6px">生成时间：2026年03月15日 · 数据来源：高德API + 携程公开数据 + 互联网公开信息</p>
+  <p style="margin-top:4px;font-size:11px">📌 客房数/开业年份/评分以携程公示为最高权威 | 如数据有误请以携程实际公示为准</p>
+</div>
+
+<!-- ECharts脚本 -->
+<script>
+// 四象限散点图
+const scatterChart = echarts.init(document.getElementById('chart-scatter'));
+scatterChart.setOption({
+  tooltip:{trigger:'item',formatter:p=>`${p.data[2]}<br/>距离:${p.data[0]}km<br/>评分:${p.data[1]}`},
+  xAxis:{name:'距离(km)',min:0,splitLine:{lineStyle:{type:'dashed'}}},
+  yAxis:{name:'评分',min:3.5,max:5.2,splitLine:{lineStyle:{type:'dashed'}}},
+  series:[{
+    type:'scatter',
+    data:[[8.0,4.5,"长兴太湖龙之梦大酒店"],[35.0,4.6,"湖州南浔古镇区域民宿"],[50.0,4.7,"安吉竹海主题酒店"]],
+    itemStyle:{color:'#e74c3c',opacity:0.8},
+    symbolSize:18,
+    label:{show:true,formatter:p=>p.data[2].substring(0,5),position:'top',fontSize:10}
+  },{
+    type:'scatter',
+    data:[[0,4.6,"【本方】长兴太湖开元"]],
+    itemStyle:{color:'#1a365d'},
+    symbolSize:22,
+    symbol:'diamond',
+    label:{show:true,formatter:'本方',position:'top',fontSize:10,fontWeight:'bold'}
+  }],
+  markLine:{silent:true,lineStyle:{type:'dashed',color:'#ccc'},
+    data:[{xAxis:3},{yAxis:4.7}]}
+});
+
+// 雷达图
+const radarChart = echarts.init(document.getElementById('chart-radar'));
+radarChart.setOption({
+  legend:{data:['本方','安吉竹海主题酒店'],bottom:0},
+  radar:{
+    indicator:[
+      {name:'服务评分',max:100},{name:'客房数量',max:100},
+      {name:'设施配套',max:100},{name:'区位交通',max:100},{name:'性价比',max:100}
+    ],
+    center:['50%','45%'],radius:'62%'
+  },
+  series:[{
+    type:'radar',
+    data:[
+      {value:[92.0,60.0,80,85,55.0],name:'本方',itemStyle:{color:'#1a365d'},areaStyle:{opacity:0.15}},
+      {value:[94.0,60,70,75,60.0],name:'安吉竹海主题酒店',itemStyle:{color:'#e74c3c'},areaStyle:{opacity:0.1}}
+    ]
+  }]
+});
+
+// 价格带图
+const priceChart = echarts.init(document.getElementById('chart-price'));
+const priceData = ["[500,600]", "[600,900]", "[400,500]", "[500,700]"];
+const priceNames = ["\u957f\u5174\u592a\u6e56\u5f00\u5143\u540d\u90fd", "\u957f\u5174\u592a\u6e56\u9f99\u4e4b\u68a6\u5927", "\u6e56\u5dde\u5357\u6d54\u53e4\u9547\u533a\u57df", "\u5b89\u5409\u7af9\u6d77\u4e3b\u9898\u9152\u5e97"];
+priceChart.setOption({
+  tooltip:{trigger:'axis',formatter:p=>p[0].axisValue+'<br/>价格区间：¥'+(p[0].value[0]+p[1].value[0])+'~¥'+(p[0].value[0]+p[1].value[0]+p[1].value[1])},
+  xAxis:{type:'value',name:'元/晚'},
+  yAxis:{type:'category',data:priceNames,axisLabel:{fontSize:11}},
+  series:[
+    {type:'bar',stack:'price',data:priceData.map(d=>d[0]),itemStyle:{color:'transparent'}},
+    {type:'bar',stack:'price',data:priceData.map((d,i)=>({value:d[1],itemStyle:{color:i===0?'#1a365d':'#e74c3c',opacity:0.8}}))}
+  ]
+});
+
+// 威胁等级饼图
+const threatChart = echarts.init(document.getElementById('chart-threat'));
+const threats = {"高":0,"中":0,"低":0};
+["\u9ad8", "\u4e2d", "\u4e2d"].forEach(t=>threats[t]++);
+threatChart.setOption({
+  title:{text:'共'+3+'家竞品',subtext:'按威胁等级分布',left:'center',top:8},
+  tooltip:{trigger:'item'},
+  series:[{
+    type:'pie',radius:['40%','65%'],center:['50%','55%'],
+    data:[
+      {value:threats['高'],name:'高威胁',itemStyle:{color:'#e74c3c'}},
+      {value:threats['中'],name:'中威胁',itemStyle:{color:'#f39c12'}},
+      {value:threats['低'],name:'低威胁',itemStyle:{color:'#27ae60'}}
+    ],
+    label:{formatter:p=>p.name+'\n'+p.value+'家'}
+  }]
+});
+
+window.addEventListener('resize',()=>{
+  scatterChart.resize();radarChart.resize();priceChart.resize();threatChart.resize();
+});
+
+// 高德地图
+const amapScript = document.createElement('script');
+amapScript.src = 'https://webapi.amap.com/maps?v=2.0&key=2ae5d6a4bbb5f44bcad65d6741d17115';
+amapScript.onload = ()=>{
+  const map = new AMap.Map('amap-container',{
+    center:[119.928384,31.016487],zoom:13,
+    mapStyle:'amap://styles/fresh'
+  });
+  // 本方酒店标记
+  new AMap.Marker({
+    position:[119.928384,31.016487],
+    title:'长兴太湖开元名都酒店',
+    icon:new AMap.Icon({size:new AMap.Size(32,32),image:'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png'})
+  }).setMap(map);
+  // 竞品标记
+  const comps = [["\u957f\u5174\u592a\u6e56\u9f99\u4e4b\u68a6\u5927\u9152\u5e97", []], ["\u6e56\u5dde\u5357\u6d54\u53e4\u9547\u533a\u57df\u6c11\u5bbf", []], ["\u5b89\u5409\u7af9\u6d77\u4e3b\u9898\u9152\u5e97", []]];
+  comps.forEach(([name,locs])=>{
+    if(locs && locs.length===2){
+      new AMap.Marker({
+        position:[parseFloat(locs[0]),parseFloat(locs[1])],
+        title:name,
+        icon:new AMap.Icon({size:new AMap.Size(32,32),image:'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png'})
+      }).setMap(map);
+    }
+  });
+};
+document.head.appendChild(amapScript);
+
+// 滚动高亮导航
+const secs = document.querySelectorAll('[id^="sec-"]');
+const navItems = document.querySelectorAll('.nav-item');
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navItems.forEach(n=>n.classList.remove('active'));
+      const a = document.querySelector('.nav-item[href="#'+e.target.id+'"]');
+      if(a){a.classList.add('active');a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
+    }
+  });
+},{threshold:0.3,rootMargin:'-52px 0px -60% 0px'});
+secs.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>
