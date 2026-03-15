@@ -313,7 +313,7 @@ body {
     <span class="logo-badge">KEMPINSKI HOTELS</span>
     <div>
       <div class="topbar-title">开元名都 竞品价格实时监控</div>
-      <div class="topbar-sub">hotel-price-monitor v1.1 · 15家酒店 · 每家≤8家竞品 · 本方与竞品同源携程采集 · 4h自动刷新</div>
+      <div class="topbar-sub">hotel-price-monitor v1.2 · 15家酒店 · 竞品来源：config+高德aroundSearch · 每次统一房型横向可比 · 平时≤5家竞品/节假日≤3家</div>
     </div>
   </div>
   <div class="topbar-right">
@@ -338,9 +338,9 @@ body {
     <div class="kpi-delta neutral">含天津瑞湾 全覆盖</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">竞品上限/酒店</div>
-    <div class="kpi-value" id="kpi-comps">≤8</div>
-    <div class="kpi-delta neutral">可自定义调换</div>
+    <div class="kpi-label">竞品来源</div>
+    <div class="kpi-value" id="kpi-comps" style="font-size:14px;">config+高德</div>
+    <div class="kpi-delta neutral">地图可选·平时≤5家</div>
   </div>
   <div class="kpi-card green">
     <div class="kpi-label">本轮采集记录</div>
@@ -387,8 +387,31 @@ body {
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title"><span class="icon">📊</span><span id="detail-title">请选择酒店</span></span>
-        <div class="date-tabs" id="date-tabs">
-          <!-- 由JS生成 -->
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <!-- 房型切换器 -->
+          <div id="room-type-switcher" style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;color:var(--text3);">房型：</span>
+            <select id="room-type-select" onchange="onRoomTypeChange(this.value)"
+              style="background:var(--panel2);border:1px solid var(--border);color:var(--text);
+                     font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;">
+              <option value="大床无早" selected>大床无早 ✓ 默认</option>
+              <option value="标准双床无早">标准双床无早</option>
+              <option value="亲子房">亲子房（节假日推荐）</option>
+              <option value="家庭房">家庭房</option>
+            </select>
+            <span id="room-type-badge" style="font-size:10px;color:var(--green);background:rgba(16,185,129,.1);
+                  padding:2px 7px;border-radius:4px;white-space:nowrap;">大床无早</span>
+          </div>
+          <!-- 地图选竞品按钮 -->
+          <button onclick="openMapSelector()" id="map-selector-btn"
+            style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);
+                   color:var(--blue);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;
+                   display:none;">
+            🗺️ 地图选竞品
+          </button>
+          <div class="date-tabs" id="date-tabs">
+            <!-- 由JS生成 -->
+          </div>
         </div>
       </div>
       <div class="panel-body">
@@ -398,11 +421,41 @@ body {
       </div>
     </div>
 
+    <!-- 地图选竞品面板（折叠） -->
+    <div id="map-panel" style="display:none;">
+      <div class="panel">
+        <div class="panel-header" style="justify-content:space-between;">
+          <span class="panel-title"><span class="icon">🗺️</span>地图选择竞品酒店（高德·周边5km）</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:11px;color:var(--text3);" id="map-comp-count">已选：— / 最多8家</span>
+            <button onclick="closeMapSelector()"
+              style="background:var(--panel2);border:1px solid var(--border);color:var(--text2);
+                     font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;">关闭</button>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <!-- 高德地图容器 -->
+          <div id="amap-container" style="height:340px;border-radius:0 0 10px 10px;"></div>
+          <!-- 候选竞品列表 -->
+          <div id="amap-candidates-list" style="padding:12px 16px;max-height:180px;overflow-y:auto;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">
+              📍 高德周边发现的酒店（点击地图标记或列表可加入/移除监控）
+            </div>
+            <div id="candidates-inner" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 竞品价格明细表 -->
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title"><span class="icon">🔍</span>竞品价格明细</span>
-        <span style="font-size:11px;color:var(--text3)" id="detail-date-label">—</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:10px;color:var(--yellow);background:rgba(245,158,11,.08);
+                padding:2px 8px;border-radius:4px;" id="current-room-type-badge">大床无早</span>
+          <span style="font-size:11px;color:var(--text3)" id="detail-date-label">—</span>
+        </div>
       </div>
       <div class="panel-body" style="padding:0;">
         <table class="price-table" id="comp-table">
@@ -412,6 +465,7 @@ body {
               <th>参考价格</th>
               <th>vs 本方</th>
               <th>变动</th>
+              <th>来源</th>
               <th>策略建议</th>
             </tr>
           </thead>
@@ -502,34 +556,227 @@ body {
   </div>
 </div>
 
-<!-- ===== v1.1 规范说明横幅 ===== -->
+<!-- ===== v1.2 规范说明横幅 ===== -->
 <div style="margin:0 24px 24px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px 20px;">
-  <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px;">⚙️ hotel-price-monitor v1.1 · 数据规范（2026-03-15修订）</div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+  <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px;">⚙️ hotel-price-monitor v1.2 · 设计规范（2026-03-15 v1.2修订）</div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
     <div style="font-size:11px;color:var(--text3);line-height:1.6;">
-      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">① 竞品数量上限</div>
-      每家酒店最多 <b style="color:var(--gold)">8家</b> 竞品，超出自动截取前8家。可在 <code>config/competitors.json</code> 中自由调换。
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">① 竞品来源双轨</div>
+      <b style="color:var(--gold)">config预设</b>（调研SKILL输出）+ <b style="color:var(--blue)">高德aroundSearch</b>（R=5km，type=100000）自动发现，按 threat_level+距离排序。
     </div>
     <div style="font-size:11px;color:var(--text3);line-height:1.6;">
-      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">② 本方价格同源</div>
-      本方酒店价格 <b style="color:var(--gold)">与竞品同轮</b> 从携程H5采集（非虚构基准），看板标注"实采"/"演示"加以区分。
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">② 地图自由选竞品</div>
+      用户可在 <b style="color:var(--gold)">地图界面</b> 点击周边酒店POI加入/移除竞品，最多 <b style="color:var(--gold)">8家</b>，无需重启监控。
     </div>
     <div style="font-size:11px;color:var(--text3);line-height:1.6;">
-      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">③ 刷新机制</div>
-      <b style="color:var(--gold)">默认4小时</b>自动刷新（节假日前后30天改为1小时）。手动"立即刷新"<b>5分钟冷却</b>，保护服务稳定。
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">③ 吞吐量自动控制</div>
+      AI计算：平时≤<b style="color:var(--gold)">5家/酒店</b>（单轮≈19分钟），节假日自动缩减至<b style="color:var(--gold)">3家</b>（防轮次重叠）。
     </div>
     <div style="font-size:11px;color:var(--text3);line-height:1.6;">
-      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">④ 真实数据原则</div>
-      <b style="color:var(--red)">严禁虚构价格</b>。采集失败时标注"⚠️失败"，不触发预警。每条价格旁显示"携程"来源标签。
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">④ 房型统一可比</div>
+      默认 <b style="color:var(--gold)">大床无早</b>（确保横向可比）。节假日可切换亲子/标间/家庭房，每次只拉一种房型。本方与竞品同房型同源采集。
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;">
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">⑤ 真实采集 · 4h刷新</div>
+      <b style="color:var(--red)">严禁虚构</b>，失败标注⚠️不预警。默认4h自动刷新，手动刷新5分钟冷却。携程H5真实采集，标注来源时间戳。
     </div>
   </div>
 </div>
 
 <script>
 // ============================================================
-// 数据层（演示模式 · 真实运行时从SQLite读取）
-// v1.1说明：本方价格字段 ourRealPrice 由 monitor.py 写入后
-//           通过 /api/latest 接口或 prices.json 静态文件注入
+// v1.2 新增：房型切换 & 地图选竞品
+// ============================================================
+
+// 当前全局房型
+let currentRoomType = '大床无早';
+let amapMapInstance  = null;
+let amapPlaceSearch  = null;
+
+/** 房型切换 */
+function onRoomTypeChange(rt) {
+  currentRoomType = rt;
+  document.getElementById('room-type-badge').textContent = rt;
+  document.getElementById('current-room-type-badge').textContent = rt;
+  // 节假日房型切换提示
+  const isHoliday = (new Date().getMonth() === 4 && new Date().getDate() <= 7) ||
+                    (new Date().getMonth() === 9 && new Date().getDate() <= 7);
+  if ((rt === '亲子房' || rt === '家庭房') && !isHoliday) {
+    showToast('💡 亲子/家庭房通常在节假日需求更旺，建议节前切换对比');
+  }
+  // 重新渲染当前选中酒店的价格（演示模式直接 redraw）
+  if (currentHotelIdx >= 0) {
+    selectHotel(currentHotelIdx);
+  }
+  // 实际接入时：调用 monitor.py API 更新 active_room_type 并触发重新采集
+  console.log(`[v1.2] 房型切换为: ${rt}，下次刷新将拉取此房型的可比价格`);
+}
+
+function showToast(msg) {
+  let t = document.getElementById('rt-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'rt-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1a2235;border:1px solid rgba(245,158,11,.4);color:#f0a500;padding:10px 16px;border-radius:8px;font-size:12px;z-index:9999;max-width:280px;line-height:1.5;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+}
+
+/** 地图选竞品：打开/关闭面板 */
+function openMapSelector() {
+  const panel = document.getElementById('map-panel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+  // 初始化高德地图（仅首次）
+  if (!amapMapInstance) {
+    initAmapForSelector();
+  }
+  updateCandidatesList();
+}
+
+function closeMapSelector() {
+  document.getElementById('map-panel').style.display = 'none';
+}
+
+function initAmapForSelector() {
+  // 高德 JS API 嵌入（使用已配置的 JSAPI Key）
+  const script = document.createElement('script');
+  script.src = 'https://webapi.amap.com/maps?v=2.0&key=2ae5d6a4bbb5f44bcad65d6741d17115&plugin=AMap.PlaceSearch,AMap.Marker';
+  script.onload = () => {
+    const h = HOTELS_DATA[currentHotelIdx];
+    // 天津瑞湾默认坐标；其他酒店用城市中心
+    const center = h.location ? [h.location.lng, h.location.lat] : [117.709574, 39.000909];
+
+    amapMapInstance = new window.AMap.Map('amap-container', {
+      zoom: 13,
+      center: center,
+      mapStyle: 'amap://styles/dark'
+    });
+
+    // 本方酒店标记（金色）
+    new window.AMap.Marker({
+      position: center,
+      title: h.name,
+      icon: new window.AMap.Icon({
+        size: new window.AMap.Size(28, 28),
+        image: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+          `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'>
+            <circle cx='14' cy='14' r='12' fill='#f0a500' stroke='#fff' stroke-width='2'/>
+            <text x='14' y='18' font-size='10' fill='#000' text-anchor='middle'>本方</text>
+          </svg>`
+        )
+      }),
+      map: amapMapInstance
+    });
+
+    // 搜索周边酒店
+    amapPlaceSearch = new window.AMap.PlaceSearch({
+      type: '住宿服务',
+      pageSize: 20,
+      extensions: 'all'
+    });
+
+    amapPlaceSearch.searchNearBy('酒店', center, 5000, (status, result) => {
+      if (status !== 'complete') return;
+      const pois = result.poiList ? result.poiList.pois : [];
+      pois.forEach(poi => {
+        if (h.name.slice(0,4) === poi.name.slice(0,4)) return;
+        const isEnabled = h.competitors && h.competitors.some(c => c.name.slice(0,4) === poi.name.slice(0,4));
+        const marker = new window.AMap.Marker({
+          position: [poi.location.lng, poi.location.lat],
+          title: poi.name,
+          icon: new window.AMap.Icon({
+            size: new window.AMap.Size(26, 26),
+            image: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+              `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26'>
+                <circle cx='13' cy='13' r='11' fill='${isEnabled ? "#10b981" : "#3b82f6"}' stroke='#fff' stroke-width='2'/>
+                <text x='13' y='17' font-size='8' fill='#fff' text-anchor='middle'>${poi.name.slice(0,2)}</text>
+              </svg>`
+            )
+          }),
+          map: amapMapInstance
+        });
+
+        // 点击标记可加入/移除监控
+        marker.on('click', () => {
+          toggleCompFromMap(h.id, {
+            id: 'amap_' + poi.id,
+            name: poi.name,
+            amap_poi_id: poi.id,
+            distance_km: poi.distance ? (poi.distance/1000).toFixed(1) : 0,
+            ctrip_keyword: poi.name
+          });
+        });
+      });
+    });
+  };
+  document.head.appendChild(script);
+}
+
+/** 从地图标记加入/移除竞品 */
+function toggleCompFromMap(hotelId, comp) {
+  const h = HOTELS_DATA.find(h => h.id === hotelId);
+  if (!h) return;
+  const idx = h.competitors.findIndex(c => c.name.slice(0,4) === comp.name.slice(0,4));
+  if (idx >= 0) {
+    if (confirm(`移除竞品「${comp.name}」？`)) {
+      h.competitors.splice(idx, 1);
+      showToast(`✅ 已移除「${comp.name}」，下次刷新生效`);
+    }
+  } else {
+    if (h.competitors.length >= 8) {
+      showToast(`⚠️ 已达上限8家竞品，请先移除一家再添加`);
+      return;
+    }
+    h.competitors.push({...comp, threat_level: 'medium', stars: 4, added_by: 'user_map'});
+    showToast(`✅ 已加入「${comp.name}」，下次刷新采集价格`);
+  }
+  updateCandidatesList();
+  updateMapCompCount(h);
+  // 真实接入时：调用 POST /api/toggle-competitor 写入 competitor_map 表
+}
+
+function updateMapCompCount(h) {
+  const cnt = h ? h.competitors.length : 0;
+  const el  = document.getElementById('map-comp-count');
+  if (el) el.textContent = `已选：${cnt} / 最多8家`;
+}
+
+function updateCandidatesList() {
+  // 演示模式下展示天津瑞湾的高德候选（真实接入时从 competitor_map 读取 enabled=0）
+  const inner = document.getElementById('candidates-inner');
+  if (!inner) return;
+  const h = HOTELS_DATA[currentHotelIdx];
+  if (!h) return;
+  // 示例候选（真实运行时从后端 /api/candidates?hotel_id= 获取）
+  const candidates = [
+    {id:'tj_c1', name:'天津滨海新区凯悦酒店', distance_km:2.8, threat_level:'high'},
+    {id:'tj_c2', name:'天津国际邮轮母港洲际', distance_km:5.5, threat_level:'medium'},
+    {id:'tj_c3', name:'天津泰达喜来登酒店', distance_km:3.1, threat_level:'medium'},
+    {id:'tj_c4', name:'天津中心城东方置地万丽', distance_km:4.2, threat_level:'medium'},
+    {id:'tj_c5', name:'天津颐高雅典娜酒店', distance_km:1.9, threat_level:'low'},
+  ];
+  inner.innerHTML = candidates.map(c => {
+    const isIn = h.competitors && h.competitors.some(e => e.name.slice(0,4) === c.name.slice(0,4));
+    const tc   = {'high':'var(--red)', 'medium':'var(--yellow)', 'low':'var(--text3)'}[c.threat_level] || 'var(--text3)';
+    return `<div onclick="toggleCompFromMap('${h.id}', ${JSON.stringify(c).replace(/"/g,"'")})"
+      style="background:${isIn ? 'rgba(16,185,129,.1)':'var(--panel2)'};border:1px solid ${isIn ? '#10b981':'var(--border)'};
+             border-radius:6px;padding:6px 10px;cursor:pointer;font-size:11px;user-select:none;">
+      <div style="color:var(--text);font-weight:500;">${isIn ? '✅ ':'➕ '}${c.name}</div>
+      <div style="color:var(--text3);margin-top:2px;">${c.distance_km}km · <span style="color:${tc};">${c.threat_level}</span></div>
+    </div>`;
+  }).join('');
+  updateMapCompCount(h);
+}
+
+// ============================================================
+// 数据层（演示模式 · 真实运行时从 data/dashboard_data.json 读取）
+// v1.2说明：本方价格 ourRealPrice 由 monitor.py export_dashboard_json()
+//           写入 data/dashboard_data.json，看板通过 fetch() 读取
 // ============================================================
 
 const HOTELS_DATA = [
@@ -708,6 +955,11 @@ function selectHotel(idx) {
   renderHotelList();
   const h = HOTELS_DATA[idx];
   document.getElementById('detail-title').textContent = h.name + ' · 竞品价格对比';
+  // v1.2: 激活地图选竞品按钮
+  const mapBtn = document.getElementById('map-selector-btn');
+  if (mapBtn) mapBtn.style.display = 'inline-block';
+  // 同步更新候选列表计数
+  updateMapCompCount(h);
   renderBarChart(h);
   renderCompTable(h);
   renderTrendChart(h);
@@ -797,44 +1049,56 @@ function renderBarChart(h) {
 }
 
 // ============================================================
-// 竞品明细表格
+// 竞品明细表格（v1.2：增加来源列+房型显示+地图标注）
 // ============================================================
 function renderCompTable(h) {
   const tbody = document.getElementById('comp-tbody');
   const multiplier = [1.0, 0.92, 1.08, 0.85, 1.15][currentDateIdx];
-  // ⚠️ v1.1说明：ourPrice 在真实运行时来自携程H5同轮采集（OUR_SELF记录）
-  // 看板演示模式下仍用basePrice推算，实际接入后将从SQLite读取 OUR_SELF 最新价格
+  // v1.2：本方价格与竞品同房型、同平台采集；演示模式用 basePrice 推算
   const ourPrice = h.ourRealPrice || Math.round(h.basePrice * multiplier);
   const ourPriceIsReal = !!h.ourRealPrice;
   document.getElementById('detail-date-label').textContent = '入住日期：' + DATES[currentDateIdx].date;
+  // 同步房型标注
+  const rtBadge = document.getElementById('current-room-type-badge');
+  if (rtBadge) rtBadge.textContent = currentRoomType;
 
-  const rows = h.competitors.slice(0, 8).map((c,i) => {  // 上限8家
+  // v1.2: 平时≤5家，节假日≤3家
+  const isHoliday = false; // 真实运行时从后端获取
+  const compLimit = isHoliday ? 3 : 5;
+  const compsToShow = h.competitors.slice(0, compLimit);
+
+  const rows = compsToShow.map((c, i) => {
     const price = c.sold ? 0 : Math.round(c.price * multiplier);
-    const lastP = Math.round(c.lastPrice * multiplier);
+    const lastP = Math.round((c.lastPrice || c.price) * multiplier);
     const diff = price - ourPrice;
     const pct = ourPrice > 0 ? (diff/ourPrice*100).toFixed(1) : 0;
     const changePct = lastP > 0 ? ((price - lastP)/lastP*100).toFixed(1) : 0;
 
     let pillClass = 'similar', pillText = '持平';
     if(c.sold) { pillClass='soldout'; pillText='无房'; }
-    else if(c.fetchFailed) { pillClass='soldout'; pillText='⚠️采集失败'; }
+    else if(c.fetchFailed) { pillClass='soldout'; pillText='⚠️失败'; }
     else if(diff > ourPrice * 0.05) { pillClass='higher'; pillText=`高${pct}%`; }
     else if(diff < -ourPrice * 0.05) { pillClass='lower'; pillText=`低${Math.abs(pct)}%`; }
 
     let changeHtml = '';
     if(!c.sold && !c.fetchFailed && lastP > 0) {
       const cls = changePct > 0 ? 'up' : changePct < 0 ? 'down' : 'flat';
-      changeHtml = `<span class="price-change ${cls}">${changePct > 0 ? '↑' : changePct < 0 ? '↓' : '—'}${Math.abs(changePct)}%</span>`;
+      changeHtml = `<span class="price-change ${cls}">${changePct>0?'↑':changePct<0?'↓':'—'}${Math.abs(changePct)}%</span>`;
     }
 
-    const stars = '★'.repeat(c.stars) + '☆'.repeat(5-c.stars);
+    const stars = '★'.repeat(c.stars||4) + '☆'.repeat(5-(c.stars||4));
     const initials = c.name.slice(0,2);
 
+    // v1.2：来源标注（config预设/高德发现/用户地图选）
+    const srcMap = {'config':'⚙️配置', 'amap_auto':'📍高德', 'user_map':'🗺️地图选', undefined:'—'};
+    const srcLabel = srcMap[c.added_by] || '⚙️配置';
+    const srcColor = c.added_by === 'amap_auto' ? 'var(--blue)' : c.added_by === 'user_map' ? 'var(--green)' : 'var(--text3)';
+
     let strategy = '';
-    if(c.fetchFailed) strategy = '⚠️ 本次采集失败，不触发预警，下轮重试';
+    if(c.fetchFailed) strategy = '⚠️ 采集失败，下轮重试，不触发预警';
     else if(c.sold) strategy = '🟢 <b>售罄机会</b>：可提价¥' + Math.round(ourPrice * 1.12);
-    else if(diff < -ourPrice * 0.1) strategy = '🔴 大幅低价竞争，检查是否节假日促销';
-    else if(pct > 20) strategy = '🟢 本方价格相对合理，持续跟进';
+    else if(diff < -ourPrice * 0.1) strategy = '🔴 大幅低价，检查节假日促销';
+    else if(pct > 20) strategy = '🟢 本方价格合理，持续跟进';
     else strategy = '🟡 保持关注，周期同步';
 
     return `
@@ -844,7 +1108,7 @@ function renderCompTable(h) {
             <div class="comp-avatar">${initials}</div>
             <div>
               <div style="font-size:12px;color:var(--text)">${c.name}</div>
-              <div class="star-bar" style="margin-top:2px;">${c.stars === 0 ? '<span style="font-size:10px;color:var(--text3)">特色民宿</span>' : stars.split('').map((s,j)=>`<span class="star ${j<c.stars?'':'empty'}">${s}</span>`).join('')}</div>
+              <div class="star-bar" style="margin-top:2px;">${(c.stars||4)===0 ? '<span style="font-size:10px;color:var(--text3)">特色民宿</span>' : stars.split('').map((s,j)=>`<span class="star ${j<(c.stars||4)?'':'empty'}">${s}</span>`).join('')}</div>
             </div>
           </div>
         </td>
@@ -853,17 +1117,21 @@ function renderCompTable(h) {
             ? '<span class="price-pill soldout">⚠️失败</span>'
             : c.sold
               ? '<span class="price-pill soldout">无房</span>'
-              : `<span style="font-size:15px;font-weight:700;color:var(--text)">¥${price}</span><span style="font-size:10px;color:var(--text3)">/晚 <span style="color:var(--green);font-size:9px">携程</span></span>`
+              : `<span style="font-size:15px;font-weight:700;color:var(--text)">¥${price}</span><span style="font-size:10px;color:var(--text3)">/晚</span>`
           }
         </td>
         <td><span class="price-pill ${pillClass}">${pillText}</span></td>
         <td>${changeHtml || '<span style="color:var(--text3);font-size:12px">—</span>'}</td>
-        <td style="font-size:11px;color:var(--text3);max-width:160px;">${strategy}</td>
+        <td>
+          <span style="font-size:10px;color:${srcColor};background:rgba(59,130,246,.08);
+                padding:1px 6px;border-radius:4px;">${srcLabel}</span>
+        </td>
+        <td style="font-size:11px;color:var(--text3);max-width:140px;">${strategy}</td>
       </tr>
     `;
   });
 
-  // 本方价格行（v1.1：同源携程采集，标注来源）
+  // 本方价格行（同源携程+同房型）
   tbody.innerHTML = `
     <tr style="background:rgba(240,165,0,.04);border:1px solid rgba(240,165,0,.15);">
       <td>
@@ -872,20 +1140,38 @@ function renderCompTable(h) {
           <div>
             <div style="font-size:12px;color:var(--gold);font-weight:600;">${h.name}</div>
             <div style="font-size:10px;color:${ourPriceIsReal?'var(--green)':'var(--yellow)'}">
-              ${ourPriceIsReal ? '✓ 携程实采' : '⚡ 演示参考（真实运行时同源采集）'}
+              ${ourPriceIsReal ? '✓ 携程实采·'+currentRoomType : '⚡ 演示（实际同源携程·'+currentRoomType+'）'}
             </div>
           </div>
         </div>
       </td>
       <td>
         <span class="price-pill our">¥${ourPrice}</span>
-        ${ourPriceIsReal ? '<span style="font-size:9px;color:var(--green);margin-left:4px;">实采</span>' : '<span style="font-size:9px;color:var(--yellow);margin-left:4px;">演示</span>'}
+        <span style="font-size:9px;color:${ourPriceIsReal?'var(--green)':'var(--yellow)'};margin-left:4px;">
+          ${ourPriceIsReal?'实采':'演示'}
+        </span>
       </td>
       <td><span style="font-size:11px;color:var(--text3)">本方基准</span></td>
       <td><span style="font-size:11px;color:var(--text3)">—</span></td>
-      <td style="font-size:11px;color:var(--text3)">与竞品同平台同轮采集 · 携程H5</td>
+      <td><span style="font-size:10px;color:var(--gold);background:rgba(240,165,0,.08);padding:1px 6px;border-radius:4px;">⚙️本方</span></td>
+      <td style="font-size:11px;color:var(--text3)">与竞品同轮同房型 · 携程H5 · ${currentRoomType}</td>
     </tr>
   ` + rows.join('');
+
+  // 若当前酒店实际竞品<5，提示可通过地图添加
+  if (h.competitors.length < 3) {
+    tbody.innerHTML += `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">
+          💡 当前仅配置 ${h.competitors.length} 家竞品
+          <button onclick="openMapSelector()" style="margin-left:8px;background:rgba(59,130,246,.12);
+            border:1px solid rgba(59,130,246,.3);color:var(--blue);font-size:11px;
+            padding:3px 10px;border-radius:5px;cursor:pointer;">
+            🗺️ 从地图添加更多竞品（建议3-5家）
+          </button>
+        </td>
+      </tr>`;
+  }
 }
 
 // ============================================================
