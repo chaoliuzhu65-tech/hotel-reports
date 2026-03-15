@@ -1,49 +1,161 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>德胧集团酒店竞品调研报告中心 v6.0</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>德胧集团 · 酒店竞品调研报告中心 v7.0</title>
 <style>
+:root{--primary:#1a365d;--gold:#C9A84C}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f4f8;color:#2d3748}
-.hero{background:linear-gradient(135deg,#1a365d,#3182ce);color:white;padding:48px 40px;text-align:center}
-.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px}
-.hero p{opacity:.85;font-size:1rem}
-.container{max-width:1100px;margin:0 auto;padding:24px 16px}
-.stat-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:24px 0}
-.stat{background:white;border-radius:12px;padding:16px 24px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.stat .v{font-size:2rem;font-weight:800;color:#3182ce}
-.stat .l{font-size:.85rem;color:#718096;margin-top:4px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:16px}
-.region-card{background:white;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
-.region-card h3{font-size:1.1rem;color:#1a365d;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
-.hotel-link{display:block;padding:9px 12px;margin:6px 0;background:#f7fafc;border-radius:8px;text-decoration:none;color:#2d3748;font-size:.92rem}
-.hotel-link:hover{background:#ebf8ff;color:#2b6cb0}
-.badge-v6{background:#3182ce;color:white;font-size:.7rem;padding:1px 6px;border-radius:8px;margin-left:4px}
-.upgrade-note{background:#f0fff4;border:1px solid #c6f6d5;border-radius:10px;padding:14px;margin:16px 0;font-size:.9rem;color:#276749}
-footer{text-align:center;padding:24px;color:#a0aec0;font-size:.85rem}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f4f8}
+.hero{background:linear-gradient(135deg,#1a365d,#2c5282);padding:40px 24px;color:#fff;text-align:center}
+.hero h1{font-size:28px;font-weight:700}
+.hero p{opacity:.8;margin-top:8px;font-size:14px}
+.badge{background:rgba(201,168,76,.3);border:1px solid var(--gold);color:var(--gold);padding:4px 16px;border-radius:20px;font-size:12px;display:inline-block;margin-bottom:16px}
+.monitor-banner{background:#e8f5e9;border:1px solid #4caf50;padding:12px 20px;margin:16px;border-radius:8px;font-size:13px;color:#2e7d32}
+.container{max-width:1100px;margin:0 auto;padding:16px}
+.city-group{margin-bottom:28px}
+.city-title{font-size:16px;font-weight:700;color:var(--primary);border-left:4px solid var(--gold);padding-left:12px;margin-bottom:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.card-header{background:var(--primary);padding:14px 16px;color:#fff}
+.card-title{font-size:14px;font-weight:600}
+.card-sub{font-size:11px;opacity:.75;margin-top:4px}
+.card-body{padding:14px 16px}
+.card-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:#666}
+.tag{background:#f0f4f8;padding:2px 8px;border-radius:12px}
+.tag.new{background:#e8f5e9;color:#2e7d32}
+.tag.v7{background:#fff3e0;color:#e65100}
+.ver-badge{background:var(--gold);color:#1a365d;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;float:right}
+.footer{background:var(--primary);color:rgba(255,255,255,.7);text-align:center;padding:20px;font-size:12px;margin-top:32px}
+.price-monitor-btn{display:block;background:#2196f3;color:#fff;text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-size:13px;margin:8px 0}
 </style>
 </head>
 <body>
 <div class="hero">
-  <h1>🏨 德胧集团酒店竞品调研报告中心</h1>
-  <p>hotel-research-skill v6.0 · 高德API真实数据 · 16个分析模块 · 2026年3月15日全量更新</p>
+  <div class="badge">OpenClaw v7.0 · 2026-03-15 升级</div>
+  <h1>德胧集团 · 酒店竞品调研报告中心</h1>
+  <p>15家酒店 · 高德API真实数据 · 携程权威信息 · 顶端横向导航 · 宏观数据质量保障</p>
 </div>
+
 <div class="container">
-  <div class="upgrade-note">
-    🆕 <strong>v6.0 全量升级完成</strong>：新增宏观环境分析、竞品三阵营分层、客群攻坚表、价格策略、风险预警5大模块。所有数据基于高德Web服务API真实返回，严格遵守数据真实性原则。
-  </div>
-  <div class="stat-row">
-    <div class="stat"><div class="v">15</div><div class="l">酒店报告</div></div>
-    <div class="stat"><div class="v">8</div><div class="l">城市覆盖</div></div>
-    <div class="stat"><div class="v">16</div><div class="l">分析模块</div></div>
-    <div class="stat"><div class="v">v6.0</div><div class="l">当前版本</div></div>
-  </div>
-  <div class="grid">
-    <div class="region-card"><h3>杭州</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_boao_v6_competitor_report.html" class="hotel-link">🏨 杭州博奥开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_baoding_v6_competitor_report.html" class="hotel-link">🏨 杭州宝鼎开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_fuchun_v6_competitor_report.html" class="hotel-link">🏨 富春芳草地度假酒店 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_sanli_v6_competitor_report.html" class="hotel-link">🏨 杭州三立开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>宁波</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/ningbo_mingting_v6_competitor_report.html" class="hotel-link">🏨 宁波澥浦开元名庭 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>宁海</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/ninghai_jinhai_v6_competitor_report.html" class="hotel-link">🏨 宁海金海开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>湖州</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changxing_mdd_v6_competitor_report.html" class="hotel-link">🏨 长兴太湖开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changxing_fcd_v6_competitor_report.html" class="hotel-link">🏨 长兴芳草地度假酒店 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>绍兴</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/shaoxing_mdd_v6_competitor_report.html" class="hotel-link">🏨 嵊州开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/zhuji_yaojiang_v6_competitor_report.html" class="hotel-link">🏨 诸暨耀江开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>常州</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changzhou_mdd_v6_competitor_report.html" class="hotel-link">🏨 常州开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>重庆</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/chongqing_mdd_v6_competitor_report.html" class="hotel-link">🏨 重庆开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/dazu_guantang_v6_competitor_report.html" class="hotel-link">🏨 大足石刻观堂 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>北京</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/beijing_gehua_v6_competitor_report.html" class="hotel-link">🏨 北京歌华开元 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>天津</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/tianjin_ruiwan_v6_competitor_report.html" class="hotel-link">🏨 天津瑞湾开元名都 <span class="badge-v6">v6.0</span></a></div>
+<div class="monitor-banner">
+  🟢 <strong>价格监控系统已启动</strong> · hotel-price-monitor v1.0 运行中 · 15家酒店×竞品实时监测 · 飞书即时预警开启
+</div>
+
+<div class="city-group">
+  <div class="city-title">🏙️ 杭州</div>
+  <div class="cards">
+    <a class="card" href="hangzhou_sanli_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">浙江三立开元名都大酒店</div><div class="card-sub">城北 · 运河沿岸</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">418间</span><span class="tag">五星</span><span class="tag v7">横向导航</span><span class="tag">宏观数据</span></div></div>
+    </a>
+    <a class="card" href="hangzhou_boao_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">杭州博奥开元名都大酒店</div><div class="card-sub">萧山 · 奥体博览中心</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">320间</span><span class="tag">五星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+    <a class="card" href="hangzhou_baoding_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">杭州宝鼎开元名都大酒店</div><div class="card-sub">临平 · 塘栖古镇</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">260间</span><span class="tag">五星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+    <a class="card" href="hangzhou_fuchun_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">杭州富春芳草地臻品之选度假酒店</div><div class="card-sub">富阳 · 富春江畔</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">150间</span><span class="tag">五星度假</span><span class="tag v7">横向导航</span></div></div>
+    </a>
   </div>
 </div>
-<footer>WorkBuddy + hotel-research-skill v6.0 · 数据来源：高德地图Web服务API + 携程公开平台 · 严禁虚构数据</footer>
+
+<div class="city-group">
+  <div class="city-title">🌊 宁波 / 宁海</div>
+  <div class="cards">
+    <a class="card" href="ningbo_mingting_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">宁波开元名庭大酒店</div><div class="card-sub">鄞州 · CBD核心</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">378间</span><span class="tag">四星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+    <a class="card" href="ninghai_jinhai_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">宁海金海开元名都大酒店</div><div class="card-sub">宁海 · 首家五星</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">268间</span><span class="tag">五星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+  </div>
+</div>
+
+<div class="city-group">
+  <div class="city-title">🌿 湖州长兴</div>
+  <div class="cards">
+    <a class="card" href="changxing_mdd_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">长兴太湖开元名都酒店</div><div class="card-sub">长兴 · 太湖沿岸</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">300间</span><span class="tag">五星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+    <a class="card" href="changxing_fcd_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">长兴芳草地乡村俱乐部</div><div class="card-sub">水口乡 · 顾渚茶文化</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">120间</span><span class="tag">四星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+  </div>
+</div>
+
+<div class="city-group">
+  <div class="city-title">🍵 绍兴（嵊州/诸暨）</div>
+  <div class="cards">
+    <a class="card" href="shaoxing_mdd_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">嵊州开元名都大酒店</div><div class="card-sub">嵊州 · 越剧故里</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">280间</span><span class="tag">五星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+    <a class="card" href="zhuji_yaojiang_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">诸暨耀江开元名都大酒店</div><div class="card-sub">诸暨 · 西施故里</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">359间</span><span class="tag">五星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+  </div>
+</div>
+
+<div class="city-group">
+  <div class="city-title">🦕 常州</div>
+  <div class="cards">
+    <a class="card" href="changzhou_mdd_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">常州开元名都大酒店</div><div class="card-sub">天宁区 · 恐龙城</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">278间</span><span class="tag">四星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+  </div>
+</div>
+
+<div class="city-group">
+  <div class="city-title">🏔️ 重庆</div>
+  <div class="cards">
+    <a class="card" href="chongqing_mdd_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">重庆开元名都酒店</div><div class="card-sub">解放碑 · 嘉陵江畔 · 2026新开</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">200间</span><span class="tag">五星</span><span class="tag new">2026新开</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+    <a class="card" href="dazu_guantang_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">重庆大足石刻观堂</div><div class="card-sub">大足 · 世界文化遗产旁</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">100间</span><span class="tag">四星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+  </div>
+</div>
+
+<div class="city-group">
+  <div class="city-title">🏛️ 北京</div>
+  <div class="cards">
+    <a class="card" href="beijing_gehua_v7_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v7.0</div><div class="card-title">北京歌华开元大酒店</div><div class="card-sub">朝阳区 · 北三环奥运商务区</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">353间</span><span class="tag">五星</span><span class="tag v7">横向导航</span></div></div>
+    </a>
+  </div>
+</div>
+
+<div class="city-group">
+  <div class="city-title">🌊 天津（保留原版）</div>
+  <div class="cards">
+    <a class="card" href="tianjin_ruiwan_v6_competitor_report.html">
+      <div class="card-header"><div class="ver-badge">v6.0</div><div class="card-title">天津瑞湾开元名都酒店</div><div class="card-sub">滨海新区 · 保留原版</div></div>
+      <div class="card-body"><div class="card-meta"><span class="tag">保留v6</span><span class="tag">不重新生成</span></div></div>
+    </a>
+  </div>
+</div>
+
+</div>
+<div class="footer">
+  <p>德胧集团 OpenClaw v7.0 · 竞品调研报告中心 · 2026-03-15 更新</p>
+  <p style="margin-top:6px">数据来源：高德Web服务API + 携程公开数据 + 互联网权威资讯 | 价格监控：hotel-price-monitor v1.0 实时运行</p>
+</div>
 </body>
 </html>
