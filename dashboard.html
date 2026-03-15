@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开元名都 · 竞品价格实时监控看板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0a0e1a;
+  --panel: #111827;
+  --panel2: #1a2235;
+  --border: #1e2d45;
+  --gold: #f0a500;
+  --gold2: #ffd166;
+  --blue: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --purple: #8b5cf6;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== 顶部标题栏 ===== */
+.topbar {
+  background: linear-gradient(90deg, #0d1b2e 0%, #1a2a4a 50%, #0d1b2e 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left { display:flex; align-items:center; gap:16px; }
+.logo-badge {
+  background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
+  color: #000;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+.topbar-title { font-size:18px; font-weight:700; color:var(--text); }
+.topbar-sub { font-size:12px; color:var(--text3); margin-top:2px; }
+.topbar-right { display:flex; align-items:center; gap:20px; }
+.status-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation: pulse-green 2s infinite; }
+@keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.4)} 50%{box-shadow:0 0 0 6px rgba(16,185,129,0)} }
+.status-text { font-size:12px; color:var(--green); display:flex;align-items:center;gap:6px; }
+.refresh-btn {
+  background: var(--panel2); border:1px solid var(--border); color:var(--text2);
+  padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer;
+  transition:all .2s;
+}
+.refresh-btn:hover { background:var(--blue); color:white; border-color:var(--blue); }
+.countdown-badge {
+  font-size:12px; color:var(--text3);
+  background:var(--panel2); border:1px solid var(--border);
+  padding:5px 12px; border-radius:6px;
+}
+#countdown-num { color:var(--gold); font-weight:700; }
+
+/* ===== 顶部 KPI 卡片行 ===== */
+.kpi-row {
+  display:grid; grid-template-columns:repeat(6,1fr); gap:12px;
+  padding:16px 24px;
+}
+.kpi-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:14px 16px;
+  position:relative; overflow:hidden;
+  transition:transform .2s;
+}
+.kpi-card:hover { transform:translateY(-2px); }
+.kpi-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background: var(--accent, var(--blue));
+}
+.kpi-card.gold::before { --accent: var(--gold); }
+.kpi-card.green::before { --accent: var(--green); }
+.kpi-card.red::before { --accent: var(--red); }
+.kpi-card.purple::before { --accent: var(--purple); }
+.kpi-card.yellow::before { --accent: var(--yellow); }
+.kpi-label { font-size:11px; color:var(--text3); margin-bottom:8px; }
+.kpi-value { font-size:26px; font-weight:700; color:var(--text); line-height:1; }
+.kpi-value.gold-text { color:var(--gold); }
+.kpi-value.green-text { color:var(--green); }
+.kpi-value.red-text { color:var(--red); }
+.kpi-delta { font-size:11px; margin-top:6px; }
+.kpi-delta.up { color:var(--red); }
+.kpi-delta.down { color:var(--green); }
+.kpi-delta.neutral { color:var(--text3); }
+
+/* ===== 主体布局 ===== */
+.main-grid {
+  display:grid; grid-template-columns:380px 1fr; gap:16px;
+  padding:0 24px 24px;
+}
+.right-grid {
+  display:flex; flex-direction:column; gap:16px;
+}
+
+/* ===== 通用面板 ===== */
+.panel {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden;
+}
+.panel-header {
+  padding:14px 18px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.panel-title {
+  font-size:14px; font-weight:600; color:var(--text);
+  display:flex; align-items:center; gap:8px;
+}
+.panel-title .icon { font-size:16px; }
+.panel-badge {
+  font-size:10px; padding:2px 8px; border-radius:10px;
+  background:rgba(59,130,246,.15); color:var(--blue); border:1px solid rgba(59,130,246,.3);
+}
+.panel-body { padding:16px 18px; }
+
+/* ===== 酒店选择器 ===== */
+.hotel-list { display:flex; flex-direction:column; gap:4px; }
+.hotel-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:8px; cursor:pointer;
+  transition:all .15s; border:1px solid transparent;
+  position:relative;
+}
+.hotel-item:hover { background:var(--panel2); }
+.hotel-item.active {
+  background:rgba(240,165,0,.08); border-color:rgba(240,165,0,.3);
+}
+.hotel-city-tag {
+  font-size:10px; padding:1px 6px; border-radius:3px;
+  background:var(--panel2); color:var(--text3); white-space:nowrap;
+  min-width:44px; text-align:center;
+}
+.hotel-name-text { font-size:13px; color:var(--text2); flex:1; line-height:1.3; }
+.hotel-item.active .hotel-name-text { color:var(--gold); }
+.hotel-alert-dot {
+  width:6px; height:6px; border-radius:50%;
+  flex-shrink:0;
+}
+.hotel-alert-dot.red { background:var(--red); animation: pulse-red 1.5s infinite; }
+.hotel-alert-dot.yellow { background:var(--yellow); }
+.hotel-alert-dot.green { background:var(--green); }
+@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ===== 价格对比主图 ===== */
+.chart-container { position:relative; height:260px; }
+
+/* ===== 竞品价格表格 ===== */
+.price-table { width:100%; border-collapse:collapse; font-size:13px; }
+.price-table th {
+  text-align:left; padding:8px 12px; font-size:11px;
+  color:var(--text3); font-weight:500; border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.price-table td {
+  padding:9px 12px; border-bottom:1px solid rgba(30,45,69,.5);
+  vertical-align:middle;
+}
+.price-table tr:last-child td { border-bottom:none; }
+.price-table tr:hover td { background:rgba(255,255,255,.02); }
+.comp-name-cell { display:flex; align-items:center; gap:8px; }
+.comp-avatar {
+  width:28px; height:28px; border-radius:6px;
+  background:var(--panel2); display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:600; color:var(--text3); flex-shrink:0;
+}
+.price-pill {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 8px; border-radius:4px; font-size:12px; font-weight:600;
+}
+.price-pill.our { background:rgba(240,165,0,.15); color:var(--gold); border:1px solid rgba(240,165,0,.3); }
+.price-pill.higher { background:rgba(239,68,68,.12); color:var(--red); border:1px solid rgba(239,68,68,.25); }
+.price-pill.lower { background:rgba(16,185,129,.12); color:var(--green); border:1px solid rgba(16,185,129,.25); }
+.price-pill.similar { background:rgba(148,163,184,.1); color:var(--text2); border:1px solid rgba(148,163,184,.2); }
+.price-pill.soldout { background:rgba(100,116,139,.1); color:var(--text3); border:1px solid rgba(100,116,139,.2); }
+.price-change {
+  font-size:11px; padding:2px 6px; border-radius:3px;
+}
+.price-change.up { color:var(--red); background:rgba(239,68,68,.08); }
+.price-change.down { color:var(--green); background:rgba(16,185,129,.08); }
+.price-change.flat { color:var(--text3); }
+.star-bar { display:flex; gap:2px; }
+.star { color:var(--gold); font-size:10px; }
+.star.empty { color:var(--border); }
+
+/* ===== 价格趋势折线图区 ===== */
+.trend-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+/* ===== 预警面板 ===== */
+.alert-list { display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; }
+.alert-list::-webkit-scrollbar { width:4px; }
+.alert-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.alert-item {
+  background:var(--panel2); border-radius:8px; padding:10px 12px;
+  border-left:3px solid var(--border);
+  display:flex; align-items:flex-start; gap:10px;
+  animation:slide-in .3s ease;
+}
+@keyframes slide-in { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+.alert-item.red-alert { border-left-color:var(--red); background:rgba(239,68,68,.06); }
+.alert-item.yellow-alert { border-left-color:var(--yellow); background:rgba(245,158,11,.06); }
+.alert-item.green-alert { border-left-color:var(--green); background:rgba(16,185,129,.06); }
+.alert-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+.alert-content { flex:1; }
+.alert-title { font-size:12px; font-weight:600; color:var(--text); margin-bottom:3px; }
+.alert-desc { font-size:11px; color:var(--text3); line-height:1.5; }
+.alert-time { font-size:10px; color:var(--text3); margin-top:4px; }
+.alert-strategy {
+  font-size:11px; margin-top:5px; padding:5px 8px;
+  background:rgba(255,255,255,.04); border-radius:4px;
+  color:var(--gold2); line-height:1.5;
+}
+
+/* ===== 日期维度切换 ===== */
+.date-tabs {
+  display:flex; gap:6px; flex-wrap:wrap;
+}
+.date-tab {
+  padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;
+  border:1px solid var(--border); color:var(--text3); background:transparent;
+  transition:all .15s;
+}
+.date-tab:hover { border-color:var(--blue); color:var(--blue); }
+.date-tab.active { background:var(--blue); border-color:var(--blue); color:white; }
+
+/* ===== 宏观市场快报 ===== */
+.market-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.market-card {
+  background:var(--panel2); border-radius:8px; padding:12px;
+  border:1px solid var(--border);
+}
+.market-card-city { font-size:11px; color:var(--text3); margin-bottom:4px; }
+.market-card-event { font-size:12px; color:var(--text); font-weight:500; margin-bottom:6px; line-height:1.4; }
+.market-card-days { font-size:11px; color:var(--gold); }
+
+/* ===== 价格热力图 ===== */
+.heatmap-row { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+.heatmap-cell {
+  border-radius:6px; padding:8px; text-align:center;
+  font-size:11px; position:relative; cursor:default;
+  transition:transform .15s;
+}
+.heatmap-cell:hover { transform:scale(1.05); }
+.hm-label { color:rgba(255,255,255,.6); margin-bottom:4px; font-size:10px; }
+.hm-price { font-weight:700; color:white; font-size:13px; }
+.hm-ratio { font-size:10px; color:rgba(255,255,255,.5); margin-top:2px; }
+
+/* ===== 底部策略建议 ===== */
+.strategy-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.strategy-item {
+  padding:10px 12px; border-radius:8px; font-size:12px;
+  line-height:1.5; border-left:3px solid;
+}
+.strategy-item.urgent { border-color:var(--red); background:rgba(239,68,68,.06); }
+.strategy-item.watch { border-color:var(--yellow); background:rgba(245,158,11,.06); }
+.strategy-item.oppo { border-color:var(--green); background:rgba(16,185,129,.06); }
+.strategy-badge {
+  font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;
+  margin-bottom:4px; display:inline-block;
+}
+.badge-red { background:var(--red); color:white; }
+.badge-yellow { background:var(--yellow); color:#000; }
+.badge-green { background:var(--green); color:white; }
+.strategy-text { color:var(--text2); }
+
+/* ===== 加载动画 ===== */
+.loading-bar {
+  height:2px; background:var(--border);
+  position:relative; overflow:hidden;
+}
+.loading-bar::after {
+  content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: loading-slide 1.5s ease-in-out infinite;
+}
+@keyframes loading-slide { to { left:100%; } }
+
+/* ===== 滚动条 ===== */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+@media (max-width:1200px) {
+  .main-grid { grid-template-columns:1fr; }
+  .kpi-row { grid-template-columns:repeat(3,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶部导航栏 ===== -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="logo-badge">KEMPINSKI HOTELS</span>
+    <div>
+      <div class="topbar-title">开元名都 竞品价格实时监控</div>
+      <div class="topbar-sub">hotel-price-monitor v1.0 · 15家酒店 × 32家竞品 · SQLite驱动</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="status-text"><span class="status-dot"></span>系统运行中</span>
+    <span class="countdown-badge">下次刷新 <span id="countdown-num">—</span></span>
+    <button class="refresh-btn" onclick="refreshDashboard()">⟳ 立即刷新</button>
+    <div style="font-size:11px;color:var(--text3);text-align:right;">
+      <div id="last-update">—</div>
+      <div style="font-size:10px">上次采集时间</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 加载进度条 ===== -->
+<div class="loading-bar" id="loading-bar"></div>
+
+<!-- ===== KPI 汇总行 ===== -->
+<div class="kpi-row">
+  <div class="kpi-card gold">
+    <div class="kpi-label">监控酒店总数</div>
+    <div class="kpi-value gold-text" id="kpi-hotels">15</div>
+    <div class="kpi-delta neutral">含天津瑞湾 全覆盖</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">竞品总数</div>
+    <div class="kpi-value" id="kpi-comps">32</div>
+    <div class="kpi-delta neutral">跨城市全景</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-label">本轮采集记录</div>
+    <div class="kpi-value green-text" id="kpi-records">—</div>
+    <div class="kpi-delta neutral">含5个关键日期</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-label">价格预警</div>
+    <div class="kpi-value red-text" id="kpi-alerts">—</div>
+    <div class="kpi-delta neutral">紧急/观察预警</div>
+  </div>
+  <div class="kpi-card yellow">
+    <div class="kpi-label">价格洼地酒店</div>
+    <div class="kpi-value" style="color:var(--yellow)" id="kpi-low">—</div>
+    <div class="kpi-delta neutral">本方低于竞对均价</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">价格偏高酒店</div>
+    <div class="kpi-value" style="color:var(--purple)" id="kpi-high">—</div>
+    <div class="kpi-delta neutral">本方高于竞对均价20%+</div>
+  </div>
+</div>
+
+<!-- ===== 主体双列 ===== -->
+<div class="main-grid">
+
+  <!-- ===== 左侧：酒店选择器 ===== -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title"><span class="icon">🏨</span>酒店列表</span>
+      <span class="panel-badge" id="monitor-mode-badge">平时 · 每4h</span>
+    </div>
+    <div class="panel-body" style="padding:8px 10px;">
+      <div class="hotel-list" id="hotel-list">
+        <!-- 由JS生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 右侧：详情区 ===== -->
+  <div class="right-grid">
+
+    <!-- 价格日期切换 + 横向对比图 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="icon">📊</span><span id="detail-title">请选择酒店</span></span>
+        <div class="date-tabs" id="date-tabs">
+          <!-- 由JS生成 -->
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 竞品价格明细表 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="icon">🔍</span>竞品价格明细</span>
+        <span style="font-size:11px;color:var(--text3)" id="detail-date-label">—</span>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <table class="price-table" id="comp-table">
+          <thead>
+            <tr>
+              <th>竞品酒店</th>
+              <th>参考价格</th>
+              <th>vs 本方</th>
+              <th>变动</th>
+              <th>策略建议</th>
+            </tr>
+          </thead>
+          <tbody id="comp-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 趋势图 + 热力图 -->
+    <div class="trend-row">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><span class="icon">📈</span>价格趋势（近5次采集）</span>
+        </div>
+        <div class="panel-body">
+          <div style="position:relative;height:160px;">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><span class="icon">🗓️</span>多日期价格热力图</span>
+        </div>
+        <div class="panel-body">
+          <div class="heatmap-row" id="heatmap-row">
+          </div>
+          <div style="display:flex;gap:16px;margin-top:10px;font-size:10px;color:var(--text3);">
+            <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>低于本方</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>持平±5%</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>高于本方</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /right-grid -->
+
+</div><!-- /main-grid -->
+
+<!-- ===== 全局预警面板 ===== -->
+<div style="padding:0 24px 16px;">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title"><span class="icon">🚨</span>价格策略预警（全局 · 实时）</span>
+      <span style="font-size:11px;color:var(--text3)">基于规则引擎：降价≥10%🔴 · 降价≥5%🟡 · 售罄机会🟢 · 本方偏高20%+🔴</span>
+    </div>
+    <div class="panel-body">
+      <div class="alert-list" id="alert-list">
+        <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">正在加载预警数据...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 市场快报 ===== -->
+<div style="padding:0 24px 24px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <!-- 全局价格雷达 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="icon">📡</span>全局价格雷达（当前查询日期）</span>
+      </div>
+      <div class="panel-body">
+        <div style="position:relative;height:220px;">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- 市场节点快报 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="icon">📅</span>市场关键节点 · 策略预备</span>
+      </div>
+      <div class="panel-body">
+        <div id="market-events">
+          <!-- 由JS生成 -->
+        </div>
+        <div style="margin-top:14px;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">全部酒店策略建议汇总</div>
+          <div class="strategy-grid" id="strategy-grid">
+            <!-- 由JS生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 数据层：模拟真实监控数据（匹配SQLite结构）
+// ============================================================
+
+const HOTELS_DATA = [
+  { id:"hangzhou_sanli", name:"三立开元名都", city:"杭州", basePrice:680,
+    competitors:[
+      {name:"远洋凯宾斯基",price:920,lastPrice:980,stars:5,sold:false},
+      {name:"广银万信至格",price:450,lastPrice:430,stars:4,sold:false},
+      {name:"百瑞运河大饭店",price:380,lastPrice:370,stars:4,sold:false}
+    ], alertLevel:"yellow"
+  },
+  { id:"ningbo_mingting", name:"宁波开元名庭", city:"宁波", basePrice:520,
+    competitors:[
+      {name:"宁波香格里拉",price:1100,lastPrice:1080,stars:5,sold:false},
+      {name:"宁波威斯汀",price:780,lastPrice:800,stars:5,sold:false},
+      {name:"宁波东港喜来登",price:850,lastPrice:870,stars:5,sold:true}
+    ], alertLevel:"green"
+  },
+  { id:"ninghai_jinhai", name:"宁海金海开元", city:"宁海", basePrice:580,
+    competitors:[
+      {name:"宁海华侨大酒店",price:350,lastPrice:360,stars:4,sold:false},
+      {name:"宁海南溪温泉",price:680,lastPrice:720,stars:4,sold:false}
+    ], alertLevel:"green"
+  },
+  { id:"changxing_mdd", name:"长兴太湖开元", city:"湖州", basePrice:680,
+    competitors:[
+      {name:"太湖龙之梦大酒店",price:590,lastPrice:650,stars:5,sold:false}
+    ], alertLevel:"red"
+  },
+  { id:"changxing_fcd", name:"长兴芳草地", city:"湖州", basePrice:1200,
+    competitors:[
+      {name:"安吉帐篷客阿丽拉",price:2200,lastPrice:2100,stars:5,sold:false}
+    ], alertLevel:"yellow"
+  },
+  { id:"shaoxing_mdd", name:"嵊州开元名都", city:"绍兴", basePrice:580,
+    competitors:[
+      {name:"嵊州保罗吾悦广场",price:420,lastPrice:450,stars:4,sold:false}
+    ], alertLevel:"yellow"
+  },
+  { id:"zhuji_yaojiang", name:"诸暨耀江开元", city:"绍兴", basePrice:620,
+    competitors:[
+      {name:"诸暨全季酒店",price:380,lastPrice:370,stars:3,sold:false},
+      {name:"诸暨希尔顿欢朋",price:480,lastPrice:500,stars:4,sold:false}
+    ], alertLevel:"green"
+  },
+  { id:"changzhou_mdd", name:"常州开元名都", city:"常州", basePrice:560,
+    competitors:[
+      {name:"常州万豪酒店",price:780,lastPrice:750,stars:5,sold:false},
+      {name:"常州富力喜来登",price:850,lastPrice:880,stars:5,sold:false},
+      {name:"恐龙主题度假酒店",price:980,lastPrice:920,stars:4,sold:false}
+    ], alertLevel:"yellow"
+  },
+  { id:"chongqing_mdd", name:"重庆开元名都", city:"重庆", basePrice:850,
+    competitors:[
+      {name:"鎏嘉码头亚朵S",price:1100,lastPrice:1180,stars:5,sold:false},
+      {name:"重庆国际大酒店",price:680,lastPrice:760,stars:5,sold:false}
+    ], alertLevel:"red"
+  },
+  { id:"dazu_guantang", name:"大足石刻观堂", city:"重庆", basePrice:680,
+    competitors:[
+      {name:"大足华茂广场商务",price:320,lastPrice:300,stars:3,sold:false}
+    ], alertLevel:"green"
+  },
+  { id:"beijing_gehua", name:"北京歌华开元", city:"北京", basePrice:1000,
+    competitors:[
+      {name:"北京金隅喜来登",price:950,lastPrice:1020,stars:5,sold:false},
+      {name:"北辰五洲皇冠国际",price:880,lastPrice:900,stars:5,sold:false},
+      {name:"格兰云天大酒店",price:760,lastPrice:780,stars:5,sold:false}
+    ], alertLevel:"red"
+  },
+  { id:"hangzhou_boao", name:"博奥开元名都", city:"杭州萧山", basePrice:620,
+    competitors:[
+      {name:"杭州萧山国际大酒店",price:480,lastPrice:490,stars:5,sold:false}
+    ], alertLevel:"yellow"
+  },
+  { id:"hangzhou_baoding", name:"宝鼎开元名都", city:"杭州临平", basePrice:600,
+    competitors:[
+      {name:"杭州星海君澜酒店",price:520,lastPrice:510,stars:4,sold:false}
+    ], alertLevel:"yellow"
+  },
+  { id:"hangzhou_fuchun", name:"富春芳草地", city:"杭州富阳", basePrice:1500,
+    competitors:[
+      {name:"富阳中洲喜来登",price:1280,lastPrice:1350,stars:5,sold:false}
+    ], alertLevel:"yellow"
+  },
+  { id:"tianjin_ruiwan", name:"天津瑞湾开元", city:"天津", basePrice:680,
+    competitors:[
+      {name:"天津滨海新区希尔顿",price:665,lastPrice:640,stars:5,sold:false},
+      {name:"天津东疆湾万丽酒店",price:642,lastPrice:680,stars:5,sold:false}
+    ], alertLevel:"yellow"
+  }
+];
+
+const DATES = [
+  { label:"明日", date: getDateStr(1) },
+  { label:"+7天", date: getDateStr(7) },
+  { label:"+30天", date: getDateStr(30) },
+  { label:"+60天", date: getDateStr(60) },
+  { label:"+90天", date: getDateStr(90) }
+];
+
+const MARKET_EVENTS = [
+  { city:"杭州", event:"国际园林景观展", days:41, urgency:"high" },
+  { city:"全国", event:"五一黄金周", days:47, urgency:"high" },
+  { city:"宁波", event:"海上丝绸之路文化节", days:62, urgency:"medium" },
+  { city:"重庆", event:"旅游文化节", days:73, urgency:"medium" },
+  { city:"北京", event:"端午假期", days:78, urgency:"low" },
+  { city:"全国", event:"国庆黄金周", days:200, urgency:"low" }
+];
+
+const STRATEGIES = [
+  { level:"urgent", text:"🔴 长兴太湖开元 · 龙之梦降价9% → 建议跟进调价 ¥680→¥630" },
+  { level:"urgent", text:"🔴 北京歌华开元 · 本方¥1000高于区域均价¥863 → 检查定价" },
+  { level:"urgent", text:"🔴 重庆开元名都 · 国际大酒店大幅降价 ¥760→¥680 → 即时评估" },
+  { level:"watch", text:"🟡 宁波名庭 · 喜来登全部无房 → 可提价¥520→¥580 抢客流" },
+  { level:"watch", text:"🟡 杭州三立 · 凯宾斯基降价6% → 关注是否继续下探" },
+  { level:"oppo", text:"🟢 宁波名庭喜来登售罄 · 提价机会：入住日期区间全线无房" }
+];
+
+// ============================================================
+// 状态
+// ============================================================
+let currentHotelIdx = 0;
+let currentDateIdx = 0;
+let barChart = null, trendChart = null, radarChart = null;
+let countdownSec = 240; // 4小时 = 14400s，演示用240s
+
+function getDateStr(n) {
+  const d = new Date(); d.setDate(d.getDate()+n);
+  return d.toISOString().split('T')[0];
+}
+
+// ============================================================
+// 初始化
+// ============================================================
+function init() {
+  renderHotelList();
+  renderDateTabs();
+  renderMarketEvents();
+  renderStrategies();
+  renderKPIs();
+  selectHotel(0);
+  startCountdown();
+  setInterval(tickCountdown, 1000);
+  document.getElementById('last-update').textContent = new Date().toLocaleString('zh-CN',{hour12:false}).slice(5);
+}
+
+// ============================================================
+// 渲染酒店列表
+// ============================================================
+function renderHotelList() {
+  const el = document.getElementById('hotel-list');
+  el.innerHTML = HOTELS_DATA.map((h,i) => `
+    <div class="hotel-item ${i===currentHotelIdx?'active':''}" onclick="selectHotel(${i})">
+      <span class="hotel-city-tag">${h.city}</span>
+      <span class="hotel-name-text">${h.name}</span>
+      <span class="hotel-alert-dot ${h.alertLevel}"></span>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// 渲染日期标签
+// ============================================================
+function renderDateTabs() {
+  const el = document.getElementById('date-tabs');
+  el.innerHTML = DATES.map((d,i) => `
+    <button class="date-tab ${i===currentDateIdx?'active':''}" onclick="selectDate(${i})">${d.label}<br><span style="font-size:9px">${d.date.slice(5)}</span></button>
+  `).join('');
+}
+
+// ============================================================
+// 选择酒店
+// ============================================================
+function selectHotel(idx) {
+  currentHotelIdx = idx;
+  renderHotelList();
+  const h = HOTELS_DATA[idx];
+  document.getElementById('detail-title').textContent = h.name + ' · 竞品价格对比';
+  renderBarChart(h);
+  renderCompTable(h);
+  renderTrendChart(h);
+  renderHeatmap(h);
+  renderAlerts();
+  renderRadarChart();
+}
+
+// ============================================================
+// 选择日期
+// ============================================================
+function selectDate(idx) {
+  currentDateIdx = idx;
+  renderDateTabs();
+  document.getElementById('detail-date-label').textContent = '入住日期：' + DATES[idx].date;
+  const h = HOTELS_DATA[currentHotelIdx];
+  renderBarChart(h);
+  renderCompTable(h);
+  renderHeatmap(h);
+}
+
+// ============================================================
+// 横向价格对比柱状图
+// ============================================================
+function renderBarChart(h) {
+  const ctx = document.getElementById('barChart').getContext('2d');
+  if(barChart) barChart.destroy();
+
+  const multiplier = [1.0, 0.92, 1.08, 0.85, 1.15][currentDateIdx];
+  const labels = ['本方: ' + h.name, ...h.competitors.map(c=>c.name)];
+  const prices = [Math.round(h.basePrice * multiplier), ...h.competitors.map(c=>Math.round(c.price * multiplier))];
+  const colors = prices.map((p,i) => {
+    if(i===0) return 'rgba(240,165,0,0.85)';
+    return p > h.basePrice * multiplier ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)';
+  });
+  const borderColors = prices.map((p,i) => {
+    if(i===0) return '#f0a500';
+    return p > h.basePrice * multiplier ? '#10b981' : '#ef4444';
+  });
+
+  barChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'参考价格（元/晚）',
+        data:prices,
+        backgroundColor:colors,
+        borderColor:borderColors,
+        borderWidth:2,
+        borderRadius:6,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(17,24,39,.95)',
+          titleColor:'#e2e8f0', bodyColor:'#94a3b8',
+          borderColor:'#1e2d45', borderWidth:1,
+          callbacks:{
+            label:(c) => {
+              const price = c.raw;
+              const diff = price - Math.round(h.basePrice * multiplier);
+              const pct = (diff / (h.basePrice * multiplier) * 100).toFixed(1);
+              return [` ¥${price}/晚`, ` vs本方: ${diff>0?'+':''}${pct}%`];
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          grid:{color:'rgba(30,45,69,.5)',drawBorder:false},
+          ticks:{color:'#64748b',font:{size:11}},
+        },
+        y:{
+          grid:{color:'rgba(30,45,69,.5)',drawBorder:false},
+          ticks:{color:'#64748b',font:{size:11},callback:v=>'¥'+v},
+          beginAtZero:false
+        }
+      },
+      animation:{duration:600, easing:'easeOutQuart'}
+    }
+  });
+}
+
+// ============================================================
+// 竞品明细表格
+// ============================================================
+function renderCompTable(h) {
+  const tbody = document.getElementById('comp-tbody');
+  const multiplier = [1.0, 0.92, 1.08, 0.85, 1.15][currentDateIdx];
+  const ourPrice = Math.round(h.basePrice * multiplier);
+  document.getElementById('detail-date-label').textContent = '入住日期：' + DATES[currentDateIdx].date;
+
+  const rows = h.competitors.map((c,i) => {
+    const price = c.sold ? 0 : Math.round(c.price * multiplier);
+    const lastP = Math.round(c.lastPrice * multiplier);
+    const diff = price - ourPrice;
+    const pct = ourPrice > 0 ? (diff/ourPrice*100).toFixed(1) : 0;
+    const changePct = lastP > 0 ? ((price - lastP)/lastP*100).toFixed(1) : 0;
+
+    let pillClass = 'similar', pillText = '持平';
+    if(c.sold) { pillClass='soldout'; pillText='无房'; }
+    else if(diff > ourPrice * 0.05) { pillClass='higher'; pillText=`高${pct}%`; }
+    else if(diff < -ourPrice * 0.05) { pillClass='lower'; pillText=`低${Math.abs(pct)}%`; }
+
+    let changeHtml = '';
+    if(!c.sold && lastP > 0) {
+      const cls = changePct > 0 ? 'up' : changePct < 0 ? 'down' : 'flat';
+      changeHtml = `<span class="price-change ${cls}">${changePct > 0 ? '↑' : changePct < 0 ? '↓' : '—'}${Math.abs(changePct)}%</span>`;
+    }
+
+    const stars = '★'.repeat(c.stars) + '☆'.repeat(5-c.stars);
+    const initials = c.name.slice(0,2);
+
+    let strategy = '';
+    if(c.sold) strategy = '🟢 <b>售罄机会</b>：可提价¥' + Math.round(ourPrice * 1.12);
+    else if(diff < -ourPrice * 0.1) strategy = '🔴 大幅低价竞争，检查是否节假日促销';
+    else if(pct > 20) strategy = '🟢 本方价格相对合理，持续跟进';
+    else strategy = '🟡 保持关注，周期同步';
+
+    return `
+      <tr>
+        <td>
+          <div class="comp-name-cell">
+            <div class="comp-avatar">${initials}</div>
+            <div>
+              <div style="font-size:12px;color:var(--text)">${c.name}</div>
+              <div class="star-bar" style="margin-top:2px;">${c.stars === 0 ? '<span style="font-size:10px;color:var(--text3)">特色民宿</span>' : stars.split('').map((s,j)=>`<span class="star ${j<c.stars?'':'empty'}">${s}</span>`).join('')}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          ${c.sold ? '<span class="price-pill soldout">无房</span>' : `<span style="font-size:15px;font-weight:700;color:var(--text)">¥${price}</span><span style="font-size:10px;color:var(--text3)">/晚</span>`}
+        </td>
+        <td><span class="price-pill ${pillClass}">${pillText}</span></td>
+        <td>${changeHtml || '<span style="color:var(--text3);font-size:12px">—</span>'}</td>
+        <td style="font-size:11px;color:var(--text3);max-width:160px;">${strategy}</td>
+      </tr>
+    `;
+  });
+
+  // 本方价格行
+  tbody.innerHTML = `
+    <tr style="background:rgba(240,165,0,.04)">
+      <td>
+        <div class="comp-name-cell">
+          <div class="comp-avatar" style="background:rgba(240,165,0,.15);color:var(--gold);">本方</div>
+          <div>
+            <div style="font-size:12px;color:var(--gold);font-weight:600;">${h.name}</div>
+            <div style="font-size:10px;color:var(--text3)">参考基价</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="price-pill our">¥${ourPrice}</span></td>
+      <td><span style="font-size:11px;color:var(--text3)">基准</span></td>
+      <td><span style="font-size:11px;color:var(--text3)">—</span></td>
+      <td style="font-size:11px;color:var(--text3)">当前查询日期基价</td>
+    </tr>
+  ` + rows.join('');
+}
+
+// ============================================================
+// 趋势折线图（模拟近5次采集数据）
+// ============================================================
+function renderTrendChart(h) {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if(trendChart) trendChart.destroy();
+
+  const now = Date.now();
+  const labels = Array.from({length:5},(_,i)=>{
+    const t = new Date(now - (4-i)*4*3600*1000);
+    return `${t.getMonth()+1}/${t.getDate()} ${t.getHours()}:00`;
+  });
+
+  const ourData = Array.from({length:5},(_,i) => Math.round(h.basePrice * (0.95 + Math.random()*0.1)));
+  const datasets = [{
+    label:'本方: ' + h.name,
+    data: ourData,
+    borderColor:'#f0a500', backgroundColor:'rgba(240,165,0,.1)',
+    borderWidth:2, pointRadius:3, fill:true, tension:0.4
+  }];
+
+  h.competitors.slice(0,2).forEach((c,ci) => {
+    const colors = ['#10b981','#3b82f6','#8b5cf6'];
+    datasets.push({
+      label: c.name,
+      data: Array.from({length:5},()=>Math.round(c.price*(0.93+Math.random()*0.14))),
+      borderColor: colors[ci], backgroundColor:'transparent',
+      borderWidth:1.5, pointRadius:2, fill:false, tension:0.4,
+      borderDash: ci > 0 ? [4,2] : []
+    });
+  });
+
+  trendChart = new Chart(ctx, {
+    type:'line', data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          position:'top',
+          labels:{color:'#64748b',font:{size:10},boxWidth:20,padding:10}
+        },
+        tooltip:{backgroundColor:'rgba(17,24,39,.95)',titleColor:'#e2e8f0',bodyColor:'#94a3b8',borderColor:'#1e2d45',borderWidth:1}
+      },
+      scales:{
+        x:{grid:{color:'rgba(30,45,69,.4)'},ticks:{color:'#64748b',font:{size:9}}},
+        y:{grid:{color:'rgba(30,45,69,.4)'},ticks:{color:'#64748b',font:{size:10},callback:v=>'¥'+v},beginAtZero:false}
+      },
+      animation:{duration:500}
+    }
+  });
+}
+
+// ============================================================
+// 热力图
+// ============================================================
+function renderHeatmap(h) {
+  const el = document.getElementById('heatmap-row');
+  const cells = DATES.map((d,i) => {
+    const multiplier = [1.0, 0.92, 1.08, 0.85, 1.15][i];
+    const ourP = Math.round(h.basePrice * multiplier);
+    const avgComp = h.competitors.length
+      ? Math.round(h.competitors.filter(c=>!c.sold).reduce((s,c)=>s+Math.round(c.price*multiplier),0)/Math.max(1,h.competitors.filter(c=>!c.sold).length))
+      : ourP;
+    const ratio = avgComp > 0 ? ourP/avgComp : 1;
+    let bg, ratioText;
+    if(ratio > 1.1) { bg='rgba(239,68,68,.35)'; ratioText=`高${((ratio-1)*100).toFixed(0)}%`; }
+    else if(ratio < 0.9) { bg='rgba(16,185,129,.35)'; ratioText=`低${((1-ratio)*100).toFixed(0)}%`; }
+    else { bg='rgba(245,158,11,.35)'; ratioText='持平'; }
+
+    return `
+      <div class="heatmap-cell" style="background:${bg};" title="${d.date}：本方¥${ourP} vs 竞均¥${avgComp}">
+        <div class="hm-label">${d.label}</div>
+        <div class="hm-price">¥${ourP}</div>
+        <div class="hm-ratio">${ratioText}</div>
+      </div>
+    `;
+  });
+  el.innerHTML = cells.join('');
+}
+
+// ============================================================
+// 全局预警
+// ============================================================
+function renderAlerts() {
+  const el = document.getElementById('alert-list');
+  const alerts = [];
+
+  HOTELS_DATA.forEach(h => {
+    h.competitors.forEach(c => {
+      if(c.sold) {
+        alerts.push({
+          level:'green', icon:'🟢',
+          title:`${h.name} · ${c.name} 售罄机会`,
+          desc:`${c.name} 在多个日期显示无房，本方可提价 ¥${h.basePrice} → ¥${Math.round(h.basePrice*1.12)}`,
+          strategy:`建议：提价10-15%，锁定溢出客流；重点推五一/端午预订包`
+        });
+      }
+      const changePct = c.lastPrice > 0 ? (c.price - c.lastPrice)/c.lastPrice*100 : 0;
+      if(changePct <= -10) {
+        alerts.push({
+          level:'red', icon:'🔴',
+          title:`【紧急】${h.name} · ${c.name} 大幅降价${Math.abs(changePct.toFixed(1))}%`,
+          desc:`${c.lastPrice} → ${c.price}元/晚，降幅超10%预警阈值`,
+          strategy:`建议：立即评估本方¥${h.basePrice}定价，考虑跟进调整¥${Math.round(h.basePrice*0.93)}`
+        });
+      } else if(changePct <= -5) {
+        alerts.push({
+          level:'yellow', icon:'🟡',
+          title:`${h.name} · ${c.name} 降价${Math.abs(changePct.toFixed(1))}%`,
+          desc:`¥${c.lastPrice} → ¥${c.price}/晚，关注是否持续下探`,
+          strategy:`建议：保持关注，若连续2次降价则触发调价评估`
+        });
+      }
+    });
+
+    // 本方偏高预警
+    const validComps = h.competitors.filter(c=>!c.sold);
+    if(validComps.length > 0) {
+      const avgComp = validComps.reduce((s,c)=>s+c.price,0)/validComps.length;
+      if(h.basePrice > avgComp * 1.2) {
+        alerts.push({
+          level:'red', icon:'🔴',
+          title:`【本方偏高】${h.name} 价格¥${h.basePrice} 超竞对均价20%+`,
+          desc:`竞对均价¥${Math.round(avgComp)}，本方¥${h.basePrice}，溢价${((h.basePrice/avgComp-1)*100).toFixed(0)}%`,
+          strategy:`建议：审查房型定价策略，检查OTA页面是否有促销设置`
+        });
+      }
+    }
+  });
+
+  if(alerts.length === 0) {
+    el.innerHTML = '<div style="color:var(--green);text-align:center;padding:20px;font-size:13px;">✅ 当前无紧急预警，系统运行稳定</div>';
+    return;
+  }
+
+  el.innerHTML = alerts.map(a => `
+    <div class="alert-item ${a.level}-alert">
+      <span class="alert-icon">${a.icon}</span>
+      <div class="alert-content">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+        <div class="alert-strategy">💡 ${a.strategy}</div>
+        <div class="alert-time">${new Date().toLocaleString('zh-CN',{hour12:false}).slice(5,14)} · 规则引擎检测</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('kpi-alerts').textContent = alerts.filter(a=>a.level==='red').length;
+}
+
+// ============================================================
+// KPI 统计
+// ============================================================
+function renderKPIs() {
+  const total = HOTELS_DATA.reduce((s,h)=>s+h.competitors.length,0)*5;
+  document.getElementById('kpi-records').textContent = total;
+
+  let low=0, high=0;
+  HOTELS_DATA.forEach(h=>{
+    const validComps = h.competitors.filter(c=>!c.sold);
+    if(!validComps.length) return;
+    const avg = validComps.reduce((s,c)=>s+c.price,0)/validComps.length;
+    if(h.basePrice < avg * 0.9) low++;
+    if(h.basePrice > avg * 1.2) high++;
+  });
+  document.getElementById('kpi-low').textContent = low;
+  document.getElementById('kpi-high').textContent = high;
+}
+
+// ============================================================
+// 雷达图（全局对比）
+// ============================================================
+function renderRadarChart() {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if(radarChart) radarChart.destroy();
+
+  const selected = Array.from({length:6},(_,i)=>HOTELS_DATA[Math.floor(i*HOTELS_DATA.length/6)]);
+  const labels = selected.map(h=>h.name);
+  const ourData = selected.map(h=>h.basePrice);
+  const compAvg = selected.map(h=>{
+    const valid = h.competitors.filter(c=>!c.sold);
+    return valid.length ? Math.round(valid.reduce((s,c)=>s+c.price,0)/valid.length) : h.basePrice;
+  });
+
+  radarChart = new Chart(ctx, {
+    type:'radar',
+    data:{
+      labels,
+      datasets:[
+        {label:'本方价格',data:ourData,borderColor:'#f0a500',backgroundColor:'rgba(240,165,0,.1)',borderWidth:2,pointBackgroundColor:'#f0a500',pointRadius:4},
+        {label:'竞对均价',data:compAvg,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',borderWidth:2,pointBackgroundColor:'#3b82f6',pointRadius:4,borderDash:[4,2]}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11},boxWidth:16,padding:12}}},
+      scales:{
+        r:{
+          grid:{color:'rgba(30,45,69,.6)'},
+          pointLabels:{color:'#64748b',font:{size:10}},
+          ticks:{color:'#64748b',font:{size:9},backdropColor:'transparent',stepSize:300},
+          angleLines:{color:'rgba(30,45,69,.6)'}
+        }
+      },
+      animation:{duration:600}
+    }
+  });
+}
+
+// ============================================================
+// 市场事件
+// ============================================================
+function renderMarketEvents() {
+  const el = document.getElementById('market-events');
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      ${MARKET_EVENTS.map(e=>{
+        const color = e.urgency==='high'?'var(--red)':e.urgency==='medium'?'var(--yellow)':'var(--text3)';
+        return `
+          <div style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;min-width:130px;">
+            <div style="font-size:10px;color:${color};margin-bottom:2px;">${e.city} · 还有${e.days}天</div>
+            <div style="font-size:12px;color:var(--text);font-weight:500;">${e.event}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ============================================================
+// 策略汇总
+// ============================================================
+function renderStrategies() {
+  const el = document.getElementById('strategy-grid');
+  el.innerHTML = STRATEGIES.map(s => {
+    const cls = s.level === 'urgent' ? 'urgent' : s.level === 'watch' ? 'watch' : 'oppo';
+    const badgeCls = s.level === 'urgent' ? 'badge-red' : s.level === 'watch' ? 'badge-yellow' : 'badge-green';
+    const badgeText = s.level === 'urgent' ? '紧急' : s.level === 'watch' ? '关注' : '机会';
+    return `
+      <div class="strategy-item ${cls}">
+        <span class="strategy-badge ${badgeCls}">${badgeText}</span>
+        <div class="strategy-text">${s.text}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// 倒计时 & 刷新
+// ============================================================
+function startCountdown() {
+  tickCountdown();
+}
+
+function tickCountdown() {
+  countdownSec--;
+  if(countdownSec <= 0) {
+    countdownSec = 240;
+    autoRefresh();
+  }
+  const m = Math.floor(countdownSec/60);
+  const s = countdownSec % 60;
+  document.getElementById('countdown-num').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function autoRefresh() {
+  // 模拟数据轻微波动（真实版：调用后端API）
+  HOTELS_DATA.forEach(h => {
+    h.competitors.forEach(c => {
+      c.lastPrice = c.price;
+      const change = (Math.random() - 0.5) * 0.06;
+      c.price = Math.round(c.price * (1 + change));
+      c.sold = Math.random() < 0.03;
+    });
+  });
+  document.getElementById('last-update').textContent = new Date().toLocaleString('zh-CN',{hour12:false}).slice(5,14);
+  renderKPIs();
+  renderAlerts();
+  renderRadarChart();
+  selectHotel(currentHotelIdx);
+}
+
+function refreshDashboard() {
+  countdownSec = 241;
+  autoRefresh();
+  // 按钮反馈
+  const btn = document.querySelector('.refresh-btn');
+  btn.textContent = '✓ 已刷新';
+  setTimeout(()=>btn.textContent='⟳ 立即刷新', 1200);
+}
+
+// ============================================================
+// 启动
+// ============================================================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
