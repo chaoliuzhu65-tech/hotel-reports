@@ -1,64 +1,49 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>德胧集团 · 酒店竞品调研报告中心 v3.1</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>德胧集团酒店竞品调研报告中心 v6.0</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2f5;min-height:100vh}
-.hero{background:linear-gradient(135deg,#1a1a2e,#16213e 50%,#0f3460);color:#fff;padding:52px 32px 44px;text-align:center}
-.hero h1{font-size:28px;font-weight:700;margin-bottom:8px}
-.hero h1 span{color:#C9A96E}
-.hero p{font-size:15px;color:rgba(255,255,255,.7);margin-bottom:24px}
-.hero-stats{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-.stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:12px 24px;text-align:center}
-.stat .n{font-size:28px;font-weight:800;color:#C9A96E}
-.stat .l{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}
-.main{max-width:960px;margin:32px auto;padding:0 20px}
-.section{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.06);margin-bottom:24px;overflow:hidden}
-.section-head{padding:18px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px}
-.section-head h2{font-size:16px;font-weight:700;color:#1a1a2e}
-.sec-icon{width:32px;height:32px;border-radius:8px;background:rgba(201,169,110,.15);display:flex;align-items:center;justify-content:center;font-size:16px}
-.section-body{padding:20px 24px}
-.region-group{margin-bottom:18px}
-.region-label{font-size:12px;color:#999;font-weight:700;letter-spacing:1px;margin-bottom:10px;padding:4px 0;border-bottom:1px solid #f0f0f0}
-.btn-row{display:flex;flex-wrap:wrap;gap:10px;padding-top:4px}
-.hotel-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#C9A96E;border:1px solid rgba(201,169,110,.4);padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s}
-.hotel-btn:hover{background:linear-gradient(135deg,#0f3460,#1a1a2e);border-color:#C9A96E;color:#fff;transform:translateY(-2px);box-shadow:0 6px 16px rgba(201,169,110,.25)}
-.note{font-size:12px;color:#999;margin-top:16px;padding:10px 14px;background:#f8f9fa;border-radius:8px;border-left:3px solid #C9A96E}
-.upgrade-badge{display:inline-block;background:rgba(39,174,96,.1);color:#27ae60;border:1px solid rgba(39,174,96,.3);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-left:10px}
-footer{text-align:center;padding:24px;font-size:12px;color:#aaa}
-footer strong{color:#C9A96E}
-@media(max-width:600px){.hero h1{font-size:20px}.hero-stats{gap:10px}}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f4f8;color:#2d3748}
+.hero{background:linear-gradient(135deg,#1a365d,#3182ce);color:white;padding:48px 40px;text-align:center}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px}
+.hero p{opacity:.85;font-size:1rem}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px}
+.stat-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:24px 0}
+.stat{background:white;border-radius:12px;padding:16px 24px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.stat .v{font-size:2rem;font-weight:800;color:#3182ce}
+.stat .l{font-size:.85rem;color:#718096;margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:16px}
+.region-card{background:white;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.region-card h3{font-size:1.1rem;color:#1a365d;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
+.hotel-link{display:block;padding:9px 12px;margin:6px 0;background:#f7fafc;border-radius:8px;text-decoration:none;color:#2d3748;font-size:.92rem}
+.hotel-link:hover{background:#ebf8ff;color:#2b6cb0}
+.badge-v6{background:#3182ce;color:white;font-size:.7rem;padding:1px 6px;border-radius:8px;margin-left:4px}
+.upgrade-note{background:#f0fff4;border:1px solid #c6f6d5;border-radius:10px;padding:14px;margin:16px 0;font-size:.9rem;color:#276749}
+footer{text-align:center;padding:24px;color:#a0aec0;font-size:.85rem}
 </style>
 </head>
 <body>
 <div class="hero">
-  <h1>德胧集团 · <span>酒店竞品调研报告中心</span></h1>
-  <p>高德地图API真实数据 · 交互式四象限竞争图 · AI策略建议 · 智能竞品去重</p>
-  <div class="hero-stats">
-    <div class="stat"><div class="n">15</div><div class="l">覆盖酒店</div></div>
-    <div class="stat"><div class="n">8</div><div class="l">城市</div></div>
-    <div class="stat"><div class="n">v3.1</div><div class="l">报告版本</div></div>
-    <div class="stat"><div class="n">2026.03</div><div class="l">最新更新</div></div>
+  <h1>🏨 德胧集团酒店竞品调研报告中心</h1>
+  <p>hotel-research-skill v6.0 · 高德API真实数据 · 16个分析模块 · 2026年3月15日全量更新</p>
+</div>
+<div class="container">
+  <div class="upgrade-note">
+    🆕 <strong>v6.0 全量升级完成</strong>：新增宏观环境分析、竞品三阵营分层、客群攻坚表、价格策略、风险预警5大模块。所有数据基于高德Web服务API真实返回，严格遵守数据真实性原则。
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="v">15</div><div class="l">酒店报告</div></div>
+    <div class="stat"><div class="v">8</div><div class="l">城市覆盖</div></div>
+    <div class="stat"><div class="v">16</div><div class="l">分析模块</div></div>
+    <div class="stat"><div class="v">v6.0</div><div class="l">当前版本</div></div>
+  </div>
+  <div class="grid">
+    <div class="region-card"><h3>杭州</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_boao_v6_competitor_report.html" class="hotel-link">🏨 杭州博奥开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_baoding_v6_competitor_report.html" class="hotel-link">🏨 杭州宝鼎开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_fuchun_v6_competitor_report.html" class="hotel-link">🏨 富春芳草地度假酒店 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_sanli_v6_competitor_report.html" class="hotel-link">🏨 杭州三立开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>宁波</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/ningbo_mingting_v6_competitor_report.html" class="hotel-link">🏨 宁波澥浦开元名庭 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>宁海</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/ninghai_jinhai_v6_competitor_report.html" class="hotel-link">🏨 宁海金海开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>湖州</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changxing_mdd_v6_competitor_report.html" class="hotel-link">🏨 长兴太湖开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changxing_fcd_v6_competitor_report.html" class="hotel-link">🏨 长兴芳草地度假酒店 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>绍兴</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/shaoxing_mdd_v6_competitor_report.html" class="hotel-link">🏨 嵊州开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/zhuji_yaojiang_v6_competitor_report.html" class="hotel-link">🏨 诸暨耀江开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>常州</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changzhou_mdd_v6_competitor_report.html" class="hotel-link">🏨 常州开元名都 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>重庆</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/chongqing_mdd_v6_competitor_report.html" class="hotel-link">🏨 重庆开元名都 <span class="badge-v6">v6.0</span></a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/dazu_guantang_v6_competitor_report.html" class="hotel-link">🏨 大足石刻观堂 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>北京</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/beijing_gehua_v6_competitor_report.html" class="hotel-link">🏨 北京歌华开元 <span class="badge-v6">v6.0</span></a></div><div class="region-card"><h3>天津</h3><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/tianjin_ruiwan_v6_competitor_report.html" class="hotel-link">🏨 天津瑞湾开元名都 <span class="badge-v6">v6.0</span></a></div>
   </div>
 </div>
-<div class="main">
-  <div class="section">
-    <div class="section-head"><div class="sec-icon">🏨</div><h2>竞品调研报告 <span class="upgrade-badge">v3.1 重构版</span></h2></div>
-    <div class="section-body">
-      <div class="region-group"><div class="region-label">📍 杭州</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_boao_competitor_report.html" target="_blank" class="hotel-btn">🏨 博奥开元名都</a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_baoding_competitor_report.html" target="_blank" class="hotel-btn">🏨 宝鼎开元名都</a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_fuchun_competitor_report.html" target="_blank" class="hotel-btn">🏨 富春芳草地</a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/hangzhou_sanli_competitor_report.html" target="_blank" class="hotel-btn">🏨 三立开元名都</a></div></div><div class="region-group"><div class="region-label">📍 宁波</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/ningbo_mingting_competitor_report.html" target="_blank" class="hotel-btn">🏨 宁波开元名庭</a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/ninghai_jinhai_competitor_report.html" target="_blank" class="hotel-btn">🏨 宁海金海开元名都</a></div></div><div class="region-group"><div class="region-label">📍 绍兴</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/shaoxing_mdd_competitor_report.html" target="_blank" class="hotel-btn">🏨 嵊州开元名都</a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/zhuji_yaojiang_competitor_report.html" target="_blank" class="hotel-btn">🏨 诸暨耀江开元名都</a></div></div><div class="region-group"><div class="region-label">📍 湖州</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changxing_mdd_competitor_report.html" target="_blank" class="hotel-btn">🏨 长兴开元名都</a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changxing_fcd_competitor_report.html" target="_blank" class="hotel-btn">🏨 长兴芳草地</a></div></div><div class="region-group"><div class="region-label">📍 常州</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/changzhou_mdd_competitor_report.html" target="_blank" class="hotel-btn">🏨 常州开元名都</a></div></div><div class="region-group"><div class="region-label">📍 重庆</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/chongqing_mdd_competitor_report.html" target="_blank" class="hotel-btn">🏨 重庆开元名都</a><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/dazu_guantang_competitor_report.html" target="_blank" class="hotel-btn">🏨 大足石刻观堂</a></div></div><div class="region-group"><div class="region-label">📍 北京</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/beijing_gehua_competitor_report.html" target="_blank" class="hotel-btn">🏨 北京歌华开元</a></div></div><div class="region-group"><div class="region-label">📍 天津</div><div class="btn-row"><a href="https://chaoliuzhu65-tech.github.io/hotel-reports/tianjin_ruiwan_competitor_report.html" target="_blank" class="hotel-btn">🏨 天津瑞湾开元名都</a></div></div>
-      <div class="note">📊 v3.1新增：交互式Canvas四象限图（悬停查看详情）· 坐标全面校正 · 智能噪声过滤 · 城区5km/郊区15km自适应半径 · 蓝海酒店专项策略分析</div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-head"><div class="sec-icon">📍</div><h2>周边信息专项报告</h2></div>
-    <div class="section-body">
-      <div class="btn-row">
-        <a href="https://chaoliuzhu65-tech.github.io/hotel-reports/周边信息报告_瑞湾开元名都酒店.html" target="_blank" class="hotel-btn">🏨 天津瑞湾 · 周边信息</a>
-      </div>
-    </div>
-  </div>
-</div>
-<footer><strong>德胧酒店集团 · 竞争情报系统 v3.1</strong><br>高德地图API · WorkBuddy SKILL自动生成 · 2026-03-15 全面重构</footer>
-</body></html>
+<footer>WorkBuddy + hotel-research-skill v6.0 · 数据来源：高德地图Web服务API + 携程公开平台 · 严禁虚构数据</footer>
+</body>
+</html>
