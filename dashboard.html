@@ -313,7 +313,7 @@ body {
     <span class="logo-badge">KEMPINSKI HOTELS</span>
     <div>
       <div class="topbar-title">开元名都 竞品价格实时监控</div>
-      <div class="topbar-sub">hotel-price-monitor v1.0 · 15家酒店 × 32家竞品 · SQLite驱动</div>
+      <div class="topbar-sub">hotel-price-monitor v1.1 · 15家酒店 · 每家≤8家竞品 · 本方与竞品同源携程采集 · 4h自动刷新</div>
     </div>
   </div>
   <div class="topbar-right">
@@ -338,14 +338,14 @@ body {
     <div class="kpi-delta neutral">含天津瑞湾 全覆盖</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">竞品总数</div>
-    <div class="kpi-value" id="kpi-comps">32</div>
-    <div class="kpi-delta neutral">跨城市全景</div>
+    <div class="kpi-label">竞品上限/酒店</div>
+    <div class="kpi-value" id="kpi-comps">≤8</div>
+    <div class="kpi-delta neutral">可自定义调换</div>
   </div>
   <div class="kpi-card green">
     <div class="kpi-label">本轮采集记录</div>
     <div class="kpi-value green-text" id="kpi-records">—</div>
-    <div class="kpi-delta neutral">含5个关键日期</div>
+    <div class="kpi-delta neutral">含本方+竞品 同源携程</div>
   </div>
   <div class="kpi-card red">
     <div class="kpi-label">价格预警</div>
@@ -502,9 +502,34 @@ body {
   </div>
 </div>
 
+<!-- ===== v1.1 规范说明横幅 ===== -->
+<div style="margin:0 24px 24px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px 20px;">
+  <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px;">⚙️ hotel-price-monitor v1.1 · 数据规范（2026-03-15修订）</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;">
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">① 竞品数量上限</div>
+      每家酒店最多 <b style="color:var(--gold)">8家</b> 竞品，超出自动截取前8家。可在 <code>config/competitors.json</code> 中自由调换。
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;">
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">② 本方价格同源</div>
+      本方酒店价格 <b style="color:var(--gold)">与竞品同轮</b> 从携程H5采集（非虚构基准），看板标注"实采"/"演示"加以区分。
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;">
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">③ 刷新机制</div>
+      <b style="color:var(--gold)">默认4小时</b>自动刷新（节假日前后30天改为1小时）。手动"立即刷新"<b>5分钟冷却</b>，保护服务稳定。
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;">
+      <div style="color:var(--text);font-weight:500;margin-bottom:3px;">④ 真实数据原则</div>
+      <b style="color:var(--red)">严禁虚构价格</b>。采集失败时标注"⚠️失败"，不触发预警。每条价格旁显示"携程"来源标签。
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
-// 数据层：模拟真实监控数据（匹配SQLite结构）
+// 数据层（演示模式 · 真实运行时从SQLite读取）
+// v1.1说明：本方价格字段 ourRealPrice 由 monitor.py 写入后
+//           通过 /api/latest 接口或 prices.json 静态文件注入
 // ============================================================
 
 const HOTELS_DATA = [
@@ -777,10 +802,13 @@ function renderBarChart(h) {
 function renderCompTable(h) {
   const tbody = document.getElementById('comp-tbody');
   const multiplier = [1.0, 0.92, 1.08, 0.85, 1.15][currentDateIdx];
-  const ourPrice = Math.round(h.basePrice * multiplier);
+  // ⚠️ v1.1说明：ourPrice 在真实运行时来自携程H5同轮采集（OUR_SELF记录）
+  // 看板演示模式下仍用basePrice推算，实际接入后将从SQLite读取 OUR_SELF 最新价格
+  const ourPrice = h.ourRealPrice || Math.round(h.basePrice * multiplier);
+  const ourPriceIsReal = !!h.ourRealPrice;
   document.getElementById('detail-date-label').textContent = '入住日期：' + DATES[currentDateIdx].date;
 
-  const rows = h.competitors.map((c,i) => {
+  const rows = h.competitors.slice(0, 8).map((c,i) => {  // 上限8家
     const price = c.sold ? 0 : Math.round(c.price * multiplier);
     const lastP = Math.round(c.lastPrice * multiplier);
     const diff = price - ourPrice;
@@ -789,11 +817,12 @@ function renderCompTable(h) {
 
     let pillClass = 'similar', pillText = '持平';
     if(c.sold) { pillClass='soldout'; pillText='无房'; }
+    else if(c.fetchFailed) { pillClass='soldout'; pillText='⚠️采集失败'; }
     else if(diff > ourPrice * 0.05) { pillClass='higher'; pillText=`高${pct}%`; }
     else if(diff < -ourPrice * 0.05) { pillClass='lower'; pillText=`低${Math.abs(pct)}%`; }
 
     let changeHtml = '';
-    if(!c.sold && lastP > 0) {
+    if(!c.sold && !c.fetchFailed && lastP > 0) {
       const cls = changePct > 0 ? 'up' : changePct < 0 ? 'down' : 'flat';
       changeHtml = `<span class="price-change ${cls}">${changePct > 0 ? '↑' : changePct < 0 ? '↓' : '—'}${Math.abs(changePct)}%</span>`;
     }
@@ -802,7 +831,8 @@ function renderCompTable(h) {
     const initials = c.name.slice(0,2);
 
     let strategy = '';
-    if(c.sold) strategy = '🟢 <b>售罄机会</b>：可提价¥' + Math.round(ourPrice * 1.12);
+    if(c.fetchFailed) strategy = '⚠️ 本次采集失败，不触发预警，下轮重试';
+    else if(c.sold) strategy = '🟢 <b>售罄机会</b>：可提价¥' + Math.round(ourPrice * 1.12);
     else if(diff < -ourPrice * 0.1) strategy = '🔴 大幅低价竞争，检查是否节假日促销';
     else if(pct > 20) strategy = '🟢 本方价格相对合理，持续跟进';
     else strategy = '🟡 保持关注，周期同步';
@@ -819,7 +849,12 @@ function renderCompTable(h) {
           </div>
         </td>
         <td>
-          ${c.sold ? '<span class="price-pill soldout">无房</span>' : `<span style="font-size:15px;font-weight:700;color:var(--text)">¥${price}</span><span style="font-size:10px;color:var(--text3)">/晚</span>`}
+          ${c.fetchFailed
+            ? '<span class="price-pill soldout">⚠️失败</span>'
+            : c.sold
+              ? '<span class="price-pill soldout">无房</span>'
+              : `<span style="font-size:15px;font-weight:700;color:var(--text)">¥${price}</span><span style="font-size:10px;color:var(--text3)">/晚 <span style="color:var(--green);font-size:9px">携程</span></span>`
+          }
         </td>
         <td><span class="price-pill ${pillClass}">${pillText}</span></td>
         <td>${changeHtml || '<span style="color:var(--text3);font-size:12px">—</span>'}</td>
@@ -828,28 +863,33 @@ function renderCompTable(h) {
     `;
   });
 
-  // 本方价格行
+  // 本方价格行（v1.1：同源携程采集，标注来源）
   tbody.innerHTML = `
-    <tr style="background:rgba(240,165,0,.04)">
+    <tr style="background:rgba(240,165,0,.04);border:1px solid rgba(240,165,0,.15);">
       <td>
         <div class="comp-name-cell">
           <div class="comp-avatar" style="background:rgba(240,165,0,.15);color:var(--gold);">本方</div>
           <div>
             <div style="font-size:12px;color:var(--gold);font-weight:600;">${h.name}</div>
-            <div style="font-size:10px;color:var(--text3)">参考基价</div>
+            <div style="font-size:10px;color:${ourPriceIsReal?'var(--green)':'var(--yellow)'}">
+              ${ourPriceIsReal ? '✓ 携程实采' : '⚡ 演示参考（真实运行时同源采集）'}
+            </div>
           </div>
         </div>
       </td>
-      <td><span class="price-pill our">¥${ourPrice}</span></td>
-      <td><span style="font-size:11px;color:var(--text3)">基准</span></td>
+      <td>
+        <span class="price-pill our">¥${ourPrice}</span>
+        ${ourPriceIsReal ? '<span style="font-size:9px;color:var(--green);margin-left:4px;">实采</span>' : '<span style="font-size:9px;color:var(--yellow);margin-left:4px;">演示</span>'}
+      </td>
+      <td><span style="font-size:11px;color:var(--text3)">本方基准</span></td>
       <td><span style="font-size:11px;color:var(--text3)">—</span></td>
-      <td style="font-size:11px;color:var(--text3)">当前查询日期基价</td>
+      <td style="font-size:11px;color:var(--text3)">与竞品同平台同轮采集 · 携程H5</td>
     </tr>
   ` + rows.join('');
 }
 
 // ============================================================
-// 趋势折线图（模拟近5次采集数据）
+// 价格趋势折线图（近5次采集，真实运行时从SQLite读取历史记录）
 // ============================================================
 function renderTrendChart(h) {
   const ctx = document.getElementById('trendChart').getContext('2d');
