@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4361ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>德胧报表分析</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a0ca3;
+      --success: #2ec4b6;
+      --danger: #e63946;
+      --warning: #f4a261;
+      --bg: #f0f2f5;
+      --card-radius: 14px;
+      --nav-h: 56px;
+      --bottom-nav-h: 60px;
+    }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+      font-size: 14px;
+      padding-top: var(--nav-h);
+      padding-bottom: var(--bottom-nav-h);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* 顶部导航 */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: var(--nav-h);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      box-shadow: 0 2px 12px rgba(67,97,238,.3);
+    }
+    .top-nav .brand { color: #fff; font-weight: 700; font-size: 15px; }
+    .top-nav .update-time { color: rgba(255,255,255,.65); font-size: 11px; text-align: right; line-height: 1.4; }
+
+    /* 底部导航 */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+      height: var(--bottom-nav-h);
+      background: #fff;
+      border-top: 1px solid #e8e8e8;
+      display: flex; align-items: stretch;
+      box-shadow: 0 -2px 12px rgba(0,0,0,.08);
+    }
+    .bottom-nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer; color: #999; font-size: 10px; gap: 3px;
+      transition: color .2s; border: none; background: none; padding: 0;
+    }
+    .bottom-nav-item i { font-size: 18px; }
+    .bottom-nav-item.active { color: var(--primary); }
+    .bottom-nav-item.active i { font-weight: 900; }
+
+    .page-panel { display: none; }
+    .page-panel.active { display: block; }
+
+    .main-wrap { max-width: 1400px; margin: 0 auto; padding: 16px 12px; }
+
+    .card {
+      border: none; border-radius: var(--card-radius);
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      margin-bottom: 14px; overflow: hidden;
+    }
+    .card-header { border: none; padding: 12px 16px; font-weight: 600; font-size: 13px; }
+    .card-body { padding: 14px; }
+
+    .upload-zone {
+      border: 2px dashed #c0c4cc; border-radius: 12px;
+      padding: 32px 16px; text-align: center; cursor: pointer;
+      background: #fafafa; transition: .3s;
+    }
+    .upload-zone:active, .upload-zone.dragover { border-color: var(--primary); background: #eef1ff; }
+    .upload-zone .upload-icon { font-size: 40px; color: #52c41a; margin-bottom: 10px; }
+    .upload-hint { font-size: 13px; color: #555; margin: 0; }
+    .upload-sub { font-size: 11px; color: #999; margin: 4px 0 0; }
+
+    .btn-touch {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 14px; border-radius: 12px; font-size: 15px;
+      font-weight: 600; border: none; cursor: pointer; transition: .2s;
+    }
+    .btn-touch:active { transform: scale(.97); }
+    .btn-collect { background: linear-gradient(135deg,#2ec4b6,#1a7a72); color: #fff; }
+    .btn-collect.disabled { background: #ccc; color: #999; cursor: not-allowed; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-item {
+      background: #fff; border-radius: 12px; padding: 16px 12px;
+      text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .stat-item .num { font-size: 26px; font-weight: 800; line-height: 1; }
+    .stat-item .lbl { font-size: 11px; color: #888; margin-top: 6px; }
+
+    .insight-box {
+      background: linear-gradient(135deg,#eef1ff,#f0fff4);
+      border-radius: 12px; padding: 16px;
+      border-left: 4px solid var(--primary);
+      white-space: pre-wrap; line-height: 1.9; font-size: 13px; color: #333;
+    }
+
+    .group-tabs-wrap {
+      overflow-x: auto; white-space: nowrap;
+      padding: 0 0 8px; margin-bottom: 4px;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .group-tabs-wrap::-webkit-scrollbar { display: none; }
+    .group-tab {
+      display: inline-flex; align-items: center;
+      padding: 7px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      background: #e8eaf6; color: #3949ab; margin-right: 8px;
+      border: none; cursor: pointer; white-space: nowrap; transition: .2s;
+    }
+    .group-tab.active { background: var(--primary); color: #fff; }
+    #groupSections > .group-section { display: none; }
+    #groupSections > .group-section.active { display: block; }
+
+    .region-bar {
+      background: linear-gradient(135deg,#e3f2fd,#fce4ec);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+      font-size: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    }
+
+    .mini-stats { display: flex; gap: 8px; margin-bottom: 12px; }
+    .mini-stat {
+      flex: 1; background: #fff; border-radius: 10px; padding: 10px 8px;
+      text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .mini-stat .val { font-size: 16px; font-weight: 700; }
+    .mini-stat .lab { font-size: 10px; color: #888; margin-top: 2px; }
+
+    .rank-list { }
+    .rank-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: #fff; border-radius: 10px;
+      margin-bottom: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.05);
+      cursor: pointer; transition: .2s;
+    }
+    .rank-item:active { background: #f0f2f5; }
+    .rank-num { width: 28px; text-align: center; flex-shrink: 0; font-weight: 700; }
+    .rank-num.r1 { color: #f5a623; font-size: 18px; }
+    .rank-num.r2 { color: #9e9e9e; font-size: 16px; }
+    .rank-num.r3 { color: #a1724b; font-size: 14px; }
+    .rank-num.rn { color: #bbb; font-size: 13px; }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-meta { font-size: 11px; color: #888; margin-top: 2px; }
+    .rank-right { text-align: right; flex-shrink: 0; }
+    .rank-val { font-size: 15px; font-weight: 700; }
+    .rank-mom { font-size: 11px; margin-top: 2px; }
+
+    .mom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .mom-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+    .mom-card-header { padding: 8px 12px; font-size: 12px; font-weight: 600; }
+    .mom-card-header.up   { background: #e8f5e9; color: #2e7d32; }
+    .mom-card-header.down { background: #fce4ec; color: #c62828; }
+    .mom-row { display: flex; justify-content: space-between; align-items: center;
+               padding: 6px 12px; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
+    .mom-row:last-child { border-bottom: none; }
+    .mom-row .hname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333; }
+    .mom-row .mval  { flex-shrink: 0; font-weight: 700; margin-left: 6px; }
+
+    .chart-wrap {
+      background: #fff; border-radius: 10px; overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,.05); margin-bottom: 12px;
+    }
+    .chart-title { padding: 10px 14px; font-size: 12px; font-weight: 600; background: #fafafa;
+                   border-bottom: 1px solid #f0f0f0; color: #555; }
+    .chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    .alert-item { padding: 12px 14px; border-radius: 10px; margin-bottom: 8px; }
+    .alert-high   { background: #fff5f5; border-left: 4px solid #e63946; }
+    .alert-medium { background: #fffbf0; border-left: 4px solid #f4a261; }
+    .alert-low    { background: #f0f7ff; border-left: 4px solid #4361ee; }
+    .alert-title  { font-size: 13px; font-weight: 700; }
+    .alert-desc   { font-size: 12px; color: #555; margin-top: 4px; }
+    .alert-tip    { font-size: 11px; color: #888; margin-top: 3px; }
+
+    .badge-trend { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .trend-up    { background: #e8f5e9; color: #2e7d32; }
+    .trend-down  { background: #fce4ec; color: #c62828; }
+    .trend-stable{ background: #e3f2fd; color: #1565c0; }
+    .trend-other { background: #fff3e0; color: #e65100; }
+
+    .pos { color: #2e7d32; font-weight: 700; }
+    .neg { color: #c62828; font-weight: 700; }
+    .neu { color: #666; }
+
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .loading-overlay.hidden { display: none; }
+    .loading-box {
+      background: #fff; border-radius: 16px; padding: 32px 48px;
+      text-align: center; min-width: 180px;
+    }
+    .loading-box .spin-text { font-size: 14px; font-weight: 600; color: #333; margin-top: 12px; }
+
+    .hotel-selector { position: relative; margin-bottom: 14px; }
+    .hotel-selector select {
+      width: 100%; padding: 12px 14px; border-radius: 10px;
+      border: 2px solid #e0e0e0; font-size: 14px; font-weight: 600;
+      background: #fff; color: #333; appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23999'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+    }
+    .hotel-selector select:focus { border-color: var(--primary); outline: none; }
+    .hotel-placeholder { text-align: center; padding: 48px 16px; color: #bbb; }
+    .hotel-placeholder i { font-size: 48px; display: block; margin-bottom: 12px; }
+
+    .detail-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    }
+    .detail-header .hname { font-size: 18px; font-weight: 800; }
+    .detail-header .hregion { font-size: 12px; opacity: .8; margin-top: 4px; }
+
+    .detail-metric-card {
+      background: #fff; border-radius: 10px; padding: 14px;
+      margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.05);
+    }
+    .detail-metric-name {
+      font-size: 13px; font-weight: 700; color: #333;
+      margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .detail-metric-val { font-size: 20px; font-weight: 800; color: var(--primary); }
+
+    .diff-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px;
+    }
+    .diff-row:last-child { border-bottom: none; }
+    .diff-label { color: #666; }
+    .diff-value { font-weight: 700; }
+    .diff-positive { color: #2e7d32; }
+    .diff-negative { color: #c62828; }
+    .diff-neutral  { color: #999; }
+
+    .collect-notice {
+      background: linear-gradient(135deg,#fff3e0,#fce4ec);
+      border-radius: 10px; padding: 16px; text-align: center; margin-bottom: 12px;
+    }
+    .collect-notice i { font-size: 28px; color: #f4a261; margin-bottom: 8px; }
+    .collect-notice .notice-text { font-size: 13px; color: #666; line-height: 1.6; }
+
+    .data-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 8px;
+      font-size: 10px; background: #e8f5e9; color: #2e7d32; font-weight: 600;
+    }
+
+    @media (min-width: 768px) {
+      body { padding-bottom: 0; }
+      .bottom-nav { display: none; }
+      .page-panel { display: block !important; }
+      .top-nav .brand { font-size: 17px; }
+      .stat-grid { grid-template-columns: repeat(4, 1fr); }
+      .main-wrap { padding: 20px 24px; }
+      .rank-list { display: none; }
+      .rank-table-wrap { display: block; }
+      .mom-grid { grid-template-columns: 1fr 1fr; }
+      .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    }
+    @media (max-width: 767px) {
+      .rank-table-wrap { display: none; }
+      .rank-list { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="brand"><i class="fas fa-chart-line me-2"></i>德胧执政区域报表</div>
+  <div class="update-time" id="lastUpdateTime"></div>
+</nav>
+
+<div class="main-wrap">
+  <!-- 上传面板 -->
+  <div class="page-panel active" id="panel-upload">
+    <div class="card">
+      <div class="card-header" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;">
+        <i class="fas fa-upload me-2"></i>手动上传报表
+      </div>
+      <div class="card-body">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon"><i class="fas fa-file-excel"></i></div>
+          <p class="upload-hint">点击选择 Excel 文件</p>
+          <p class="upload-sub">支持 .xlsx / .xls &nbsp;·&nbsp; 可拖拽</p>
+          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+        </div>
+        <div id="uploadStatus" class="mt-3"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:linear-gradient(135deg,#2ec4b6,#1a7a72);color:#fff;">
+        <i class="fas fa-sync-alt me-2"></i>自动采集数据
+      </div>
+      <div class="card-body" id="collectBody"></div>
+    </div>
+  </div>
+
+  <!-- 总览面板 -->
+  <div class="page-panel" id="panel-overview">
+    <div class="stat-grid">
+      <div class="stat-item"><div class="num text-primary" id="statHotels">0</div><div class="lbl">参与酒店</div></div>
+      <div class="stat-item"><div class="num text-success" id="statRising">0</div><div class="lbl">环比上升指标</div></div>
+      <div class="stat-item"><div class="num text-danger" id="statFalling">0</div><div class="lbl">环比下降指标</div></div>
+      <div class="stat-item"><div class="num text-warning" id="statAlerts">0</div><div class="lbl">警示数量</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;">
+        <i class="fas fa-brain me-2"></i>AI 智能洞察
+      </div>
+      <div class="card-body p-0">
+        <div class="insight-box m-3" id="aiInsight">请先上传报表数据...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 指标面板 -->
+  <div class="page-panel" id="panel-metrics">
+    <div class="card">
+      <div class="card-header bg-white">
+        <div class="group-tabs-wrap" id="groupTabs"></div>
+      </div>
+      <div class="card-body pt-0">
+        <div id="groupSections"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 单店详情面板 -->
+  <div class="page-panel" id="panel-hotel">
+    <div class="card">
+      <div class="card-header" style="background:linear-gradient(135deg,#f77f00,#d62828);color:#fff;">
+        <i class="fas fa-hotel me-2"></i>单店详情
+      </div>
+      <div class="card-body">
+        <div class="hotel-selector">
+          <select id="hotelSelect" onchange="onHotelSelect(this.value)">
+            <option value="">-- 请选择酒店 --</option>
+          </select>
+        </div>
+        <div id="hotelDetailContent">
+          <div class="hotel-placeholder">
+            <i class="fas fa-hand-pointer"></i>
+            <div>请从上方下拉列表中选择一家酒店</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 警示面板 -->
+  <div class="page-panel" id="panel-alerts">
+    <div class="card">
+      <div class="card-header" style="background:linear-gradient(135deg,#e63946,#c1121f);color:#fff;">
+        <i class="fas fa-bell me-2"></i>AI 实时警示
+      </div>
+      <div class="card-body" id="alertsContainer">
+        <p class="text-muted small"><i class="fas fa-check-circle text-success me-1"></i>暂无警示数据</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="bottom-nav-item active" data-panel="upload" onclick="switchPanel('upload',this)">
+    <i class="fas fa-upload"></i><span>上传</span>
+  </button>
+  <button class="bottom-nav-item" data-panel="overview" onclick="switchPanel('overview',this)">
+    <i class="fas fa-home"></i><span>总览</span>
+  </button>
+  <button class="bottom-nav-item" data-panel="metrics" onclick="switchPanel('metrics',this)">
+    <i class="fas fa-chart-bar"></i><span>指标</span>
+  </button>
+  <button class="bottom-nav-item" data-panel="hotel" onclick="switchPanel('hotel',this)">
+    <i class="fas fa-hotel"></i><span>单店</span>
+  </button>
+  <button class="bottom-nav-item" data-panel="alerts" onclick="switchPanel('alerts',this)">
+    <i class="fas fa-bell"></i><span>警示</span>
+  </button>
+</nav>
+
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem;"></div>
+    <div class="spin-text" id="loadingText">正在处理中...</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// 全局状态
+// ═══════════════════════════════════════════════════════════════
+let charts = {};
+let _groups = [];
+let _hotelList = [];
+let _detailCharts = {};
+let _lastResult = null; // 缓存完整分析结果
+const WEEK_LABELS = ['最新周', '第2周', '第3周', '第4周', '第5周'];
+const STORAGE_KEY = 'delong_analysis_result';
+
+// 6组核心指标定义（与 Python analyzer.py 完全一致）
+const METRIC_GROUPS = [
+  { name: 'OCC出租率',           colStart: 2,  colCount: 5 },
+  { name: 'APP本人订住OCC',       colStart: 7,  colCount: 5 },
+  { name: 'APP本人订住收佣OCC',   colStart: 12, colCount: 5 },
+  { name: 'APP本人订住百房',      colStart: 17, colCount: 5 },
+  { name: '百达卡百房',           colStart: 22, colCount: 5 },
+  { name: 'APP下载%',             colStart: 27, colCount: 5 },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// localStorage 持久化
+// ═══════════════════════════════════════════════════════════════
+function saveResult(result) {
+  _lastResult = result;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+  } catch(e) { console.warn('localStorage save failed:', e); }
+}
+
+function loadResult() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      _lastResult = JSON.parse(raw);
+      return _lastResult;
+    }
+  } catch(e) { console.warn('localStorage load failed:', e); }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 数据解析 - 用 SheetJS 替代 Python pandas
+// ═══════════════════════════════════════════════════════════════
+function safeStr(val) {
+  if (val === null || val === undefined) return '';
+  const s = String(val).trim();
+  return (s === 'nan' || s === 'None' || s === '') ? '' : s;
+}
+
+function safeFloat(val) {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  const s = String(val).trim();
+  if (s === '' || s === 'nan' || s === 'None' || s === '-') return null;
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+function calcTrend(values) {
+  const valid = values.filter(v => v !== null);
+  if (valid.length < 2) return '数据不足';
+  // values[0]=最新，反转后看时间序列
+  const seq = valid.slice().reverse();
+  const changes = [];
+  for (let i = 1; i < seq.length; i++) changes.push(seq[i] - seq[i-1]);
+  const pos = changes.filter(c => c > 0).length;
+  const neg = changes.filter(c => c < 0).length;
+  if (pos === changes.length) return '持续上升';
+  if (neg === changes.length) return '持续下降';
+  if (changes[changes.length-1] > 0) return '近期回升';
+  if (changes[changes.length-1] < 0) return '近期下滑';
+  return '基本稳定';
+}
+
+function extractMetricValues(row, group) {
+  const values = [];
+  for (let offset = 0; offset < group.colCount; offset++) {
+    const colIdx = group.colStart + offset;
+    values.push(colIdx < row.length ? safeFloat(row[colIdx]) : null);
+  }
+  const latest = values[0];
+  const prev = values[1];
+  let mom = null;
+  if (latest !== null && prev !== null && prev !== 0) {
+    mom = Math.round((latest - prev) / Math.abs(prev) * 10000) / 100;
+  }
+  return { weeks: values, latest, prev, mom, trend: calcTrend(values) };
+}
+
+function parseExcelFile(workbook) {
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+  if (rows.length < 4) return null;
+
+  // 数据行从第3行开始（index=2）
+  const dataRows = rows.slice(2);
+  const summaryKeywords = ['合计', '小计', '汇总', '总计'];
+  const hotelRows = [];
+  const summaryRows = [];
+
+  for (let i = 0; i < dataRows.length; i++) {
+    const row = dataRows[i];
+    const aVal = safeStr(row[0]);
+    const bVal = safeStr(row[1]);
+    if (!aVal && !bVal) continue;
+    const isSummary = summaryKeywords.some(kw => aVal.includes(kw) || bVal.includes(kw)) || bVal === '';
+    if (isSummary) summaryRows.push(row);
+    else hotelRows.push(row);
+  }
+
+  // 构建酒店数据
+  const hotels = hotelRows.map(row => {
+    const record = { region: safeStr(row[0]), hotel: safeStr(row[1]), metrics: {} };
+    for (const g of METRIC_GROUPS) record.metrics[g.name] = extractMetricValues(row, g);
+    return record;
+  });
+
+  // 构建汇总行
+  const summary = summaryRows.map(row => {
+    const label = safeStr(row[1]) || safeStr(row[0]);
+    const record = { label, metrics: {} };
+    for (const g of METRIC_GROUPS) record.metrics[g.name] = extractMetricValues(row, g);
+    return record;
+  });
+
+  return { hotels, summary, total_hotels: hotels.length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 数据分析 - 完全移植 Python analyzer.py 的逻辑
+// ═══════════════════════════════════════════════════════════════
+function analyze(parsed) {
+  if (!parsed) return {};
+  const hotels = parsed.hotels || [];
+  const summary = parsed.summary || [];
+  const resultsByGroup = [];
+
+  for (const group of METRIC_GROUPS) {
+    const gname = group.name;
+    const hotelData = hotels.map(h => {
+      const m = h.metrics[gname] || {};
+      return {
+        hotel: h.hotel, region: h.region,
+        latest: m.latest, prev: m.prev, mom: m.mom,
+        trend: m.trend || '', weeks: m.weeks || [],
+      };
+    });
+
+    const valid = hotelData.filter(h => h.latest !== null);
+    const ranking = valid.slice().sort((a, b) => b.latest - a.latest);
+    ranking.forEach((item, i) => item.rank = i + 1);
+
+    const momValid = valid.filter(h => h.mom !== null);
+    const momAsc = momValid.slice().sort((a, b) => a.mom - b.mom);
+    const momDesc = momValid.slice().sort((a, b) => b.mom - a.mom);
+
+    const allVals = valid.map(h => h.latest);
+    const avg = allVals.length ? allVals.reduce((a,b)=>a+b,0)/allVals.length : null;
+    const stats = {
+      avg: avg !== null ? Math.round(avg*10000)/10000 : null,
+      max: allVals.length ? Math.max(...allVals) : null,
+      min: allVals.length ? Math.min(...allVals) : null,
+      rising: momValid.filter(h => h.mom > 0).length,
+      falling: momValid.filter(h => h.mom < 0).length,
+      stable: momValid.filter(h => h.mom === 0).length,
+    };
+
+    let regionSum = null;
+    for (const s of summary) {
+      const ms = s.metrics[gname] || {};
+      if (ms.latest !== null) {
+        regionSum = { label: s.label, latest: ms.latest, mom: ms.mom, weeks: ms.weeks, trend: ms.trend };
+        break;
+      }
+    }
+
+    resultsByGroup.push({
+      name: gname, hotels: hotelData, ranking,
+      mom_top_rising: momDesc.slice(0, 10),
+      mom_top_falling: momAsc.slice(0, 10),
+      stats, region_summary: regionSum,
+    });
+  }
+
+  const totalRising = resultsByGroup.reduce((s, g) => s + g.stats.rising, 0);
+  const totalFalling = resultsByGroup.reduce((s, g) => s + g.stats.falling, 0);
+
+  return {
+    groups: resultsByGroup,
+    hotel_count: hotels.length,
+    overall: { total_rising: totalRising, total_falling: totalFalling, group_count: METRIC_GROUPS.length },
+  };
+}
+
+function generateAiInsight(analysis) {
+  const groups = analysis.groups || [];
+  const overall = analysis.overall || {};
+  const lines = [];
+  const rising = overall.total_rising || 0;
+  const falling = overall.total_falling || 0;
+
+  if (rising > falling) lines.push(`📈 整体向好：${rising}项指标环比上升，${falling}项下降，多数酒店经营改善。`);
+  else if (falling > rising) lines.push(`📉 整体承压：${falling}项指标环比下降，${rising}项上升，需重点关注下滑酒店。`);
+  else lines.push(`➡️ 整体持平：上升与下降指标数量相当（${rising}升/${falling}降）。`);
+
+  for (const g of groups) {
+    const st = g.stats;
+    if (st.avg === null) continue;
+    const gname = g.name;
+    const avgFmt = st.avg < 10 ? `${(st.avg*100).toFixed(1)}%` : st.avg.toFixed(2);
+    lines.push(`\n【${gname}】均值 ${avgFmt}，${st.rising}家环比上升 / ${st.falling}家下降`);
+    if (g.mom_top_rising && g.mom_top_rising[0] && g.mom_top_rising[0].mom > 0)
+      lines.push(`  🥇 涨幅最大：${g.mom_top_rising[0].hotel}（+${g.mom_top_rising[0].mom.toFixed(1)}%）`);
+    if (g.mom_top_falling && g.mom_top_falling[0] && g.mom_top_falling[0].mom < 0)
+      lines.push(`  ⚠️ 降幅最大：${g.mom_top_falling[0].hotel}（${g.mom_top_falling[0].mom.toFixed(1)}%）`);
+  }
+  lines.push('\n💡 建议：对连续下滑酒店安排专项复盘，对优秀案例推广成功经验。');
+  return lines.join('\n');
+}
+
+function buildAlerts(analysis) {
+  const alerts = [];
+  for (const g of (analysis.groups || [])) {
+    for (const h of (g.mom_top_falling || []).slice(0, 3)) {
+      if (h.mom !== null && h.mom < -5) {
+        alerts.push({
+          severity: h.mom < -15 ? '高' : '中',
+          metric_name: g.name, rule_name: '环比大幅下降',
+          description: `${h.hotel} ${g.name}环比下降 ${Math.abs(h.mom).toFixed(1)}%`,
+          suggestion: '建议安排专项复盘，分析下降原因',
+        });
+      }
+    }
+    for (const h of (g.hotels || [])) {
+      if (h.trend === '持续下降') {
+        alerts.push({
+          severity: '中', metric_name: g.name, rule_name: '连续下滑',
+          description: `${h.hotel} ${g.name}连续多周下滑`,
+          suggestion: '需关注是否有系统性问题',
+        });
+      }
+    }
+  }
+  const high = alerts.filter(a => a.severity === '高').length;
+  const medium = alerts.filter(a => a.severity === '中').length;
+  return { total: alerts.length, high, medium, low: alerts.length - high - medium, alerts };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 单店详情
+// ═══════════════════════════════════════════════════════════════
+function getHotelDetail(analysis, hotelName) {
+  if (!analysis) return null;
+  const groups = analysis.groups || [];
+  if (!groups.length) return null;
+
+  const detail = { hotel: hotelName, region: '', metrics: [] };
+
+  for (const g of groups) {
+    const hotels = g.hotels || [];
+    const target = hotels.find(h => h.hotel === hotelName);
+    if (!target) continue;
+    detail.region = target.region || '';
+
+    const valid = hotels.filter(h => h.latest !== null);
+    const allVals = valid.map(h => h.latest);
+    const regionAvg = allVals.length ? Math.round(allVals.reduce((a,b)=>a+b,0)/allVals.length*10000)/10000 : null;
+
+    let top50Avg = null;
+    if (allVals.length) {
+      const sorted = allVals.slice().sort((a,b) => b-a);
+      const cutoff = Math.max(1, Math.ceil(sorted.length * 0.5));
+      const top50 = sorted.slice(0, cutoff);
+      top50Avg = Math.round(top50.reduce((a,b)=>a+b,0)/top50.length*10000)/10000;
+    }
+
+    const calcDiff = (val, ref) => {
+      if (val === null || ref === null || ref === 0) return { abs: null, pct: null };
+      return { abs: Math.round((val-ref)*10000)/10000, pct: Math.round((val-ref)/Math.abs(ref)*10000)/100 };
+    };
+
+    const hotelLatest = target.latest;
+    detail.metrics.push({
+      name: g.name, weeks: target.weeks, latest: hotelLatest,
+      prev: target.prev, mom: target.mom, trend: target.trend,
+      rank: (g.ranking||[]).find(h => h.hotel === hotelName)?.rank || null,
+      region_avg: regionAvg, top50_avg: top50Avg,
+      diff_region: calcDiff(hotelLatest, regionAvg),
+      diff_top50: calcDiff(hotelLatest, top50Avg),
+    });
+  }
+
+  return detail.metrics.length ? detail : null;
+}
+
+function getHotelList(analysis) {
+  if (!analysis) return [];
+  const seen = new Set();
+  const result = [];
+  for (const g of (analysis.groups || [])) {
+    for (const h of (g.hotels || [])) {
+      const name = h.hotel || '';
+      if (name && !seen.has(name)) { seen.add(name); result.push(name); }
+    }
+  }
+  return result.sort();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 文件处理 & 上传
+// ═══════════════════════════════════════════════════════════════
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      showLoading('正在解析并分析报表...');
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      const parsed = parseExcelFile(workbook);
+      if (!parsed || !parsed.hotels.length) {
+        hideLoading();
+        document.getElementById('uploadStatus').innerHTML =
+          `<div class="alert alert-danger py-2 small">解析失败：未识别到酒店数据行，请检查文件格式</div>`;
+        return;
+      }
+
+      const analysisResult = analyze(parsed);
+      const aiInsight = generateAiInsight(analysisResult);
+      const alertsDisplay = buildAlerts(analysisResult);
+
+      const result = {
+        file_info: { filename: file.name, analysis_time: new Date().toISOString() },
+        data_summary: { hotel_count: parsed.total_hotels, group_count: METRIC_GROUPS.length },
+        analysis: analysisResult,
+        ai_insight: aiInsight,
+        alerts_display: alertsDisplay,
+      };
+
+      saveResult(result);
+      hideLoading();
+
+      document.getElementById('uploadStatus').innerHTML =
+        `<div class="alert alert-success py-2 small"><i class="fas fa-check-circle me-1"></i>上传成功：${file.name}（${parsed.total_hotels}家酒店）<span class="data-badge ms-2">已自动保存</span></div>`;
+
+      renderAll(result);
+      setTimeout(jumpToOverview, 600);
+    } catch(err) {
+      hideLoading();
+      document.getElementById('uploadStatus').innerHTML =
+        `<div class="alert alert-danger py-2 small">解析失败: ${err.message}</div>`;
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { if(e.target.files[0]) processFile(e.target.files[0]); });
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 采集面板
+// ═══════════════════════════════════════════════════════════════
+function renderCollectPanel() {
+  const body = document.getElementById('collectBody');
+  body.innerHTML = `
+    <div class="collect-notice">
+      <i class="fas fa-desktop"></i>
+      <div class="notice-text">
+        <strong>自动采集功能</strong><br>
+        自动采集需要通过电脑端运行 Python 程序执行（依赖 Selenium 浏览器自动化）。<br>
+        当前网页版本仅支持<strong>手动上传 Excel 报表</strong>。
+      </div>
+    </div>
+    <button class="btn-touch btn-collect disabled" disabled>
+      <i class="fas fa-ban"></i>仅支持手动上传
+    </button>`;
+}
+renderCollectPanel();
+
+// ═══════════════════════════════════════════════════════════════
+// 页面加载时恢复上次数据
+// ═══════════════════════════════════════════════════════════════
+(function restoreLastData() {
+  const cached = loadResult();
+  if (cached) {
+    renderAll(cached);
+    const fname = (cached.file_info || {}).filename || '历史数据';
+    const atime = (cached.file_info || {}).analysis_time ? new Date(cached.file_info.analysis_time).toLocaleString('zh-CN') : '';
+    document.getElementById('uploadStatus').innerHTML =
+      `<div class="alert alert-success py-2 small"><i class="fas fa-database me-1"></i>已恢复上次数据：${fname}${atime ? ' ('+atime+')' : ''}</div>`;
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// Tab 切换
+// ═══════════════════════════════════════════════════════════════
+function switchPanel(name, btn) {
+  document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name === 'metrics') {
+    const activeTab = document.querySelector('.group-tab.active');
+    if(activeTab) {
+      const idx = +activeTab.dataset.idx;
+      if(_groups[idx] && !charts['c' + idx]) initGroupChart(_groups[idx], idx);
+    }
+  }
+}
+
+function jumpToOverview() {
+  const btn = document.querySelector('.bottom-nav-item[data-panel="overview"]');
+  switchPanel('overview', btn);
+}
+
+function jumpToHotel(hotelName) {
+  const btn = document.querySelector('.bottom-nav-item[data-panel="hotel"]');
+  switchPanel('hotel', btn);
+  document.getElementById('hotelSelect').value = hotelName;
+  onHotelSelect(hotelName);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Loading
+// ═══════════════════════════════════════════════════════════════
+function showLoading(t) { document.getElementById('loadingText').textContent = t||'处理中...'; document.getElementById('loadingOverlay').classList.remove('hidden'); }
+function hideLoading() { document.getElementById('loadingOverlay').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════════════
+// 主渲染
+// ═══════════════════════════════════════════════════════════════
+function renderAll(data) {
+  const now = new Date().toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('lastUpdateTime').innerHTML = `<div>更新</div><div>${now}</div>`;
+
+  const analysis = data.analysis || {};
+  const overall  = analysis.overall  || {};
+  const groups   = analysis.groups   || [];
+  _groups = groups;
+
+  document.getElementById('statHotels').textContent  = analysis.hotel_count || 0;
+  document.getElementById('statRising').textContent  = overall.total_rising || 0;
+  document.getElementById('statFalling').textContent = overall.total_falling || 0;
+  document.getElementById('statAlerts').textContent  = (data.alerts_display || {}).total || 0;
+
+  document.getElementById('aiInsight').textContent = data.ai_insight || '暂无洞察';
+
+  renderGroupTabs(groups);
+  renderAlerts(data.alerts_display || {});
+  refreshHotelSelect();
+
+  const alertN = (data.alerts_display || {}).total || 0;
+  const alertBtn = document.querySelector('.bottom-nav-item[data-panel="alerts"] span');
+  if(alertBtn) alertBtn.textContent = alertN > 0 ? `警示(${alertN})` : '警示';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 酒店列表 & 单店详情（纯前端，无需 API）
+// ═══════════════════════════════════════════════════════════════
+function refreshHotelSelect() {
+  const analysis = (_lastResult || {}).analysis || {};
+  _hotelList = getHotelList(analysis);
+  const sel = document.getElementById('hotelSelect');
+  sel.innerHTML = '<option value="">-- 请选择酒店 --</option>';
+  _hotelList.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function onHotelSelect(hotelName) {
+  if(!hotelName) {
+    document.getElementById('hotelDetailContent').innerHTML = `
+      <div class="hotel-placeholder"><i class="fas fa-hand-pointer"></i><div>请从上方下拉列表中选择一家酒店</div></div>`;
+    return;
+  }
+  const analysis = (_lastResult || {}).analysis || {};
+  const detail = getHotelDetail(analysis, hotelName);
+  if(detail) renderHotelDetail(detail);
+  else document.getElementById('hotelDetailContent').innerHTML = `<div class="alert alert-danger py-2 small">未找到酒店: ${hotelName}</div>`;
+}
+
+function renderHotelDetail(detail) {
+  Object.values(_detailCharts).forEach(c => c && c.dispose && c.dispose());
+  _detailCharts = {};
+
+  const metrics = detail.metrics || [];
+  let html = `
+    <div class="detail-header">
+      <div class="hname"><i class="fas fa-hotel me-2"></i>${detail.hotel}</div>
+      <div class="hregion"><i class="fas fa-map-marker-alt me-1"></i>${detail.region || '未知区域'}</div>
+    </div><div class="detail-grid">`;
+
+  metrics.forEach((m, idx) => {
+    const momHtml = m.mom !== null ? fmtMom(m.mom) : '-';
+    const momCls2 = m.mom !== null ? (m.mom >= 0 ? 'pos' : 'neg') : 'neu';
+    const rankHtml = m.rank ? `第${m.rank}名` : '-';
+    const regionDiffHtml = formatDiff(m.diff_region, m.name);
+    const top50DiffHtml = formatDiff(m.diff_top50, m.name);
+
+    html += `
+      <div class="detail-metric-card">
+        <div class="detail-metric-name">
+          <span>${m.name}</span>
+          <span class="badge-trend ${trendCls(m.trend)}" style="font-size:10px;">${m.trend}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;">
+          <span class="detail-metric-val">${fmtVal(m.latest, m.name)}</span>
+          <span style="font-size:12px;color:#888;">环比 <span class="${momCls2}">${momHtml}</span></span>
+          <span style="font-size:11px;color:#aaa;">${rankHtml}</span>
+        </div>
+        <div class="chart-wrap" style="margin-bottom:10px;">
+          <div class="chart-scroll">
+            <div id="detail_chart_${idx}" style="height:160px;width:100%;min-width:260px;"></div>
+          </div>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">vs 区域均值 (${fmtVal(m.region_avg, m.name)})</span>
+          <span class="diff-value ${regionDiffHtml.cls}">${regionDiffHtml.text}</span>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">vs 前50%均值 (${fmtVal(m.top50_avg, m.name)})</span>
+          <span class="diff-value ${top50DiffHtml.cls}">${top50DiffHtml.text}</span>
+        </div>
+      </div>`;
+  });
+
+  html += '</div>';
+  document.getElementById('hotelDetailContent').innerHTML = html;
+
+  requestAnimationFrame(() => {
+    metrics.forEach((m, idx) => initDetailChart(m, idx));
+  });
+}
+
+function formatDiff(diffObj, gname) {
+  if(diffObj.abs === null || diffObj.pct === null) return { text: '-', cls: 'diff-neutral' };
+  const sign = diffObj.abs >= 0 ? '+' : '';
+  const cls = diffObj.abs > 0 ? 'diff-positive' : diffObj.abs < 0 ? 'diff-negative' : 'diff-neutral';
+  const text = `${sign}${fmtVal(diffObj.abs, gname)} (${sign}${diffObj.pct.toFixed(1)}%)`;
+  return { text, cls };
+}
+
+function initDetailChart(m, idx) {
+  const dom = document.getElementById('detail_chart_' + idx);
+  if(!dom) return;
+  const chart = echarts.init(dom);
+  _detailCharts['d' + idx] = chart;
+  const weeks = m.weeks || [];
+  const values = weeks.map(v => v !== null && v !== undefined ? v : null);
+  chart.setOption({
+    tooltip: { trigger: 'axis', formatter: p => { if(!p||!p.length) return ''; return `${WEEK_LABELS[p[0].dataIndex]||''}<br/>${m.name}: ${fmtVal(p[0].value, m.name)}`; } },
+    grid: { top: 20, right: 16, bottom: 24, left: 40 },
+    xAxis: { type: 'category', data: WEEK_LABELS, axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value', axisLabel: { fontSize: 10, formatter: v => fmtVal(v, m.name) } },
+    series: [{
+      type: 'line', data: values, smooth: true, symbol: 'circle', symbolSize: 8,
+      lineStyle: { color: '#4361ee', width: 2 }, itemStyle: { color: '#4361ee' },
+      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+        colorStops: [{ offset: 0, color: 'rgba(67,97,238,0.25)' }, { offset: 1, color: 'rgba(67,97,238,0.02)' }]
+      }},
+      label: { show: true, position: 'top', fontSize: 9, formatter: p => fmtVal(p.value, m.name) }
+    }]
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 指标组 Tab
+// ═══════════════════════════════════════════════════════════════
+function renderGroupTabs(groups) {
+  const tabsEl = document.getElementById('groupTabs');
+  const secsEl = document.getElementById('groupSections');
+  tabsEl.innerHTML = ''; secsEl.innerHTML = '';
+  Object.values(charts).forEach(c => c && c.dispose && c.dispose());
+  charts = {};
+
+  groups.forEach((g, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'group-tab' + (idx === 0 ? ' active' : '');
+    btn.textContent = g.name;
+    btn.dataset.idx = idx;
+    btn.onclick = () => switchGroupTab(idx);
+    tabsEl.appendChild(btn);
+
+    const sec = document.createElement('div');
+    sec.className = 'group-section' + (idx === 0 ? ' active' : '');
+    sec.id = 'gsec_' + idx;
+    sec.innerHTML = buildGroupSection(g, idx);
+    secsEl.appendChild(sec);
+  });
+
+  if(groups.length > 0) initGroupChart(groups[0], 0);
+}
+
+function switchGroupTab(idx) {
+  document.querySelectorAll('.group-tab').forEach(b => b.classList.toggle('active', +b.dataset.idx === idx));
+  document.querySelectorAll('.group-section').forEach(s => s.classList.toggle('active', s.id === 'gsec_' + idx));
+  if(_groups[idx] && !charts['c' + idx]) initGroupChart(_groups[idx], idx);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 构建指标组内容
+// ═══════════════════════════════════════════════════════════════
+function buildGroupSection(g, idx) {
+  const st = g.stats || {};
+  let regionHtml = '';
+  if(g.region_summary) {
+    const rs = g.region_summary;
+    regionHtml = `<div class="region-bar">
+      <strong>区域合计（${rs.label}）</strong>
+      <span>最新 <strong>${fmtVal(rs.latest, g.name)}</strong></span>
+      <span>环比 <span class="${momCls(rs.mom)}">${fmtMom(rs.mom)}</span></span>
+      <span class="badge-trend ${trendCls(rs.trend)}">${rs.trend}</span>
+    </div>`;
+  }
+
+  const miniHtml = `<div class="mini-stats">
+    <div class="mini-stat"><div class="val" style="color:var(--primary)">${fmtVal(st.avg,g.name)}</div><div class="lab">均值</div></div>
+    <div class="mini-stat"><div class="val text-success">${fmtVal(st.max,g.name)}</div><div class="lab">最高</div></div>
+    <div class="mini-stat"><div class="val text-danger">${fmtVal(st.min,g.name)}</div><div class="lab">最低</div></div>
+    <div class="mini-stat"><div class="val text-success">${st.rising||0}</div><div class="lab">↑上升</div></div>
+    <div class="mini-stat"><div class="val text-danger">${st.falling||0}</div><div class="lab">↓下降</div></div>
+  </div>`;
+
+  const momHtml = `<div class="mom-grid">
+    <div class="mom-card">
+      <div class="mom-card-header up"><i class="fas fa-arrow-up me-1"></i>涨幅最大</div>
+      ${(g.mom_top_rising||[]).slice(0,5).map(h=>`<div class="mom-row"><span class="hname">${h.hotel}</span><span class="mval pos">${fmtMom(h.mom)}</span></div>`).join('')||'<div class="mom-row text-muted">暂无</div>'}
+    </div>
+    <div class="mom-card">
+      <div class="mom-card-header down"><i class="fas fa-arrow-down me-1"></i>降幅最大</div>
+      ${(g.mom_top_falling||[]).slice(0,5).map(h=>`<div class="mom-row"><span class="hname">${h.hotel}</span><span class="mval neg">${fmtMom(h.mom)}</span></div>`).join('')||'<div class="mom-row text-muted">暂无</div>'}
+    </div>
+  </div>`;
+
+  const ranking = g.ranking || [];
+  const gname = g.name;
+
+  const rankListHtml = `<div class="rank-list">
+    <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;"><i class="fas fa-trophy text-warning me-1"></i>最新周排行榜（点击查看详情）</div>
+    ${ranking.slice(0,15).map(h => {
+      const rcls = h.rank===1?'r1':h.rank===2?'r2':h.rank===3?'r3':'rn';
+      const ricon = h.rank<=3 ? '<i class="fas fa-medal"></i>' : h.rank;
+      return `<div class="rank-item" onclick="jumpToHotel('${h.hotel.replace(/'/g, "\\'")}')">
+        <div class="rank-num ${rcls}">${ricon}</div>
+        <div class="rank-info"><div class="rank-name">${h.hotel}</div><div class="rank-meta">${h.region} · <span class="badge-trend ${trendCls(h.trend)}">${h.trend}</span></div></div>
+        <div class="rank-right"><div class="rank-val">${fmtVal(h.latest,gname)}</div><div class="rank-mom ${momCls(h.mom)}">${fmtMom(h.mom)}</div></div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="rank-table-wrap">
+    <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;"><i class="fas fa-trophy text-warning me-1"></i>最新周排行榜（Top 15）</div>
+    <div class="table-responsive"><table class="table table-hover table-sm mb-0" style="font-size:13px;">
+      <thead><tr><th>排名</th><th>酒店</th><th>区域</th><th>最新值</th><th>环比</th><th>趋势</th></tr></thead>
+      <tbody>${ranking.slice(0,15).map(h=>`<tr style="cursor:pointer" onclick="jumpToHotel('${h.hotel.replace(/'/g, "\\'")}')">
+        <td>${h.rank<=3?`<i class="fas fa-medal"></i> `:''}${h.rank}</td><td>${h.hotel}</td><td style="color:#888">${h.region}</td>
+        <td><strong>${fmtVal(h.latest,gname)}</strong></td><td><span class="${momCls(h.mom)}">${fmtMom(h.mom)}</span></td>
+        <td><span class="badge-trend ${trendCls(h.trend)}">${h.trend}</span></td></tr>`).join('')}
+      </tbody></table></div>
+  </div>`;
+
+  const chartHtml = `<div class="chart-wrap">
+    <div class="chart-title"><i class="fas fa-chart-bar text-primary me-1"></i>最新周数值分布（Top 20）</div>
+    <div class="chart-scroll">
+      <div id="chart_${idx}" style="height:240px;min-width:${Math.max(ranking.slice(0,20).length*40,320)}px;"></div>
+    </div>
+  </div>`;
+
+  return regionHtml + miniHtml + momHtml + chartHtml + rankListHtml;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ECharts 图表
+// ═══════════════════════════════════════════════════════════════
+function initGroupChart(g, idx) {
+  const dom = document.getElementById('chart_' + idx);
+  if(!dom || charts['c'+idx]) return;
+  const ranking = (g.ranking||[]).slice(0,20);
+  const names  = ranking.map(h => h.hotel);
+  const values = ranking.map(h => h.latest || 0);
+  const colors = ranking.map(h => (h.mom||0) >= 0 ? '#2ec4b6' : '#e63946');
+  const chart = echarts.init(dom);
+  charts['c'+idx] = chart;
+  chart.setOption({
+    tooltip: { trigger:'axis', formatter: p => `${p[0].name}<br/>${g.name}：${fmtVal(p[0].value, g.name)}` },
+    grid: { top:16, bottom:72, left:6, right:6, containLabel:true },
+    xAxis: { type:'category', data:names, axisLabel:{ rotate:45, fontSize:10, interval:0 } },
+    yAxis: { type:'value', axisLabel:{ fontSize:10 } },
+    series: [{
+      type:'bar', data:values,
+      itemStyle:{ color: p => colors[p.dataIndex], borderRadius:[4,4,0,0] },
+      label:{ show:true, position:'top', fontSize:9, formatter: p => fmtVal(p.value, g.name) }
+    }]
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 警示渲染
+// ═══════════════════════════════════════════════════════════════
+function renderAlerts(ad) {
+  const con = document.getElementById('alertsContainer');
+  const list = ad.alerts || [];
+  if(!list.length) {
+    con.innerHTML = '<p class="text-muted small"><i class="fas fa-check-circle text-success me-1"></i>未发现异常，各项指标表现良好</p>';
+    return;
+  }
+  const badges = [
+    ad.high > 0 ? `<span class="badge bg-danger me-1">${ad.high}个高风险</span>` : '',
+    ad.medium > 0 ? `<span class="badge bg-warning me-1">${ad.medium}个中风险</span>` : '',
+  ].filter(Boolean).join('');
+
+  con.innerHTML = `<div class="mb-3">${badges}</div>` + list.map(a => {
+    const cls  = a.severity === '高' ? 'alert-high' : a.severity === '中' ? 'alert-medium' : 'alert-low';
+    const icon = a.severity === '高' ? 'fa-exclamation-circle text-danger' : 'fa-exclamation-triangle text-warning';
+    return `<div class="alert-item ${cls}">
+      <div class="alert-title"><i class="fas ${icon} me-1"></i>${a.metric_name} · ${a.rule_name}</div>
+      <div class="alert-desc">${a.description}</div>
+      <div class="alert-tip"><i class="fas fa-lightbulb me-1"></i>${a.suggestion}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 格式化工具
+// ═══════════════════════════════════════════════════════════════
+function fmtVal(v, gname) {
+  if(v === null || v === undefined) return '-';
+  const pct = ['OCC', 'APP下载'];
+  if(pct.some(k => (gname||'').includes(k))) return (v*100).toFixed(1)+'%';
+  return v.toFixed(2);
+}
+function fmtMom(m) { if(m === null || m === undefined) return '-'; return (m>=0?'+':'') + m.toFixed(1)+'%'; }
+function momCls(m) { if(m === null || m === undefined) return 'neu'; return m>0?'pos':m<0?'neg':'neu'; }
+function trendCls(t) {
+  if(!t) return 'trend-other';
+  if(t.includes('上升')||t.includes('回升')) return 'trend-up';
+  if(t.includes('下降')||t.includes('下滑')) return 'trend-down';
+  if(t.includes('稳定')) return 'trend-stable';
+  return 'trend-other';
+}
+
+// 桌面端排行颜色补丁
+const _style = document.createElement('style');
+_style.textContent = `.rank-1{color:#f5a623;font-weight:700;}.rank-2{color:#9e9e9e;font-weight:700;}.rank-3{color:#a1724b;font-weight:700;}.rank-n{color:#bbb;}`;
+document.head.appendChild(_style);
+</script>
+</body>
+</html>
