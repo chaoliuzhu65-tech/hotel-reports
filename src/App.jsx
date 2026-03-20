@@ -71,11 +71,11 @@ const DEFAULT_ROLES = [
 ];
 
 const SAMPLE_USERS = [
-  { id: "u001", name: "夏美娟", phone: "13802134933", dept: "marketing", role: "admin", avatar: "夏", status: "active", createdAt: "2024-01-01" },
-  { id: "u002", name: "李勋", phone: "13800000000", dept: "marketing", role: "sales", avatar: "李", status: "active", createdAt: "2024-03-15" },
-  { id: "u003", name: "王丽", phone: "13800000001", dept: "marketing", role: "sales", avatar: "王", status: "active", createdAt: "2024-06-01" },
-  { id: "u004", name: "刘强", phone: "13800000002", dept: "fb", role: "manager", avatar: "刘", status: "active", createdAt: "2024-02-10" },
-  { id: "u005", name: "张华", phone: "13800000003", dept: "frontdesk", role: "staff", avatar: "张", status: "active", createdAt: "2025-01-01" },
+  { id: "u001", name: "夏美娟", phone: "13802134933", dept: "marketing", role: "admin", avatar: "夏", status: "active", createdAt: "2024-01-01", username: "admin", password: "1234", feishuId: "" },
+  { id: "u002", name: "李勋", phone: "13800000000", dept: "marketing", role: "sales", avatar: "李", status: "active", createdAt: "2024-03-15", username: "lixun", password: "1234", feishuId: "" },
+  { id: "u003", name: "王丽", phone: "13800000001", dept: "marketing", role: "sales", avatar: "王", status: "active", createdAt: "2024-06-01", username: "wangli", password: "1234", feishuId: "" },
+  { id: "u004", name: "刘强", phone: "13800000002", dept: "fb", role: "manager", avatar: "刘", status: "active", createdAt: "2024-02-10", username: "liuqiang", password: "1234", feishuId: "" },
+  { id: "u005", name: "张华", phone: "13800000003", dept: "frontdesk", role: "staff", avatar: "张", status: "active", createdAt: "2025-01-01", username: "zhanghua", password: "1234", feishuId: "" },
 ];
 
 // ==================== 审计日志 ====================
@@ -583,8 +583,8 @@ const VenueFormModal = ({ open, onClose, onSave, venue }) => {
 // ==================== 用户管理 ====================
 const UserFormModal = ({ open, onClose, onSave, user, roles }) => {
   const isEdit = !!user;
-  const [f, setF] = useState({ name:"", phone:"", dept:"marketing", role:"staff", status:"active" });
-  useEffect(()=>{ if(user) setF({...user}); else setF({ name:"", phone:"", dept:"marketing", role:"staff", status:"active" }); },[user, open]);
+  const [f, setF] = useState({ name:"", phone:"", dept:"marketing", role:"staff", status:"active", username:"", password:"", feishuId:"" });
+  useEffect(()=>{ if(user) setF({...user, password: user.password || ""}); else setF({ name:"", phone:"", dept:"marketing", role:"staff", status:"active", username:"", password:"1234", feishuId:"" }); },[user, open]);
   const u=(k,v)=>setF(p=>({...p,[k]:v}));
   return <Modal open={open} onClose={onClose} title={isEdit?"编辑用户":"新增用户"}>
     <div className="space-y-3">
@@ -592,6 +592,11 @@ const UserFormModal = ({ open, onClose, onSave, user, roles }) => {
         <Input label="姓名" value={f.name} onChange={v=>u("name",v)} required />
         <Input label="手机号" value={f.phone} onChange={v=>u("phone",v)} required />
       </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="登录账号" value={f.username} onChange={v=>u("username",v)} placeholder="用于系统登录" required />
+        <Input label="登录密码" value={f.password} onChange={v=>u("password",v)} placeholder="默认1234" type="password" />
+      </div>
+      <Input label="飞书用户ID (选填)" value={f.feishuId} onChange={v=>u("feishuId",v)} placeholder="ou_xxxxxxxxxx (用于飞书消息/对话关联)" />
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Select label="部门" value={f.dept} onChange={v=>u("dept",v)} options={DEPARTMENTS.map(d=>({value:d.id,label:d.name}))} />
         <Select label="角色" value={f.role} onChange={v=>u("role",v)} options={roles.map(r=>({value:r.id,label:r.name}))} />
@@ -600,7 +605,7 @@ const UserFormModal = ({ open, onClose, onSave, user, roles }) => {
       {f.role && <div className="bg-gray-50 rounded-lg p-3"><h4 className="text-xs font-semibold text-gray-600 mb-2">角色权限预览</h4><div className="flex flex-wrap gap-1.5">{roles.find(r=>r.id===f.role)?.permissions.map(pid=>{const p=PERMISSIONS.find(x=>x.id===pid); return p?<Badge key={pid} className="bg-indigo-50 text-indigo-700 border-indigo-200">{p.label}</Badge>:null})}</div></div>}
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="secondary" onClick={onClose}>取消</Button>
-        <Button variant="primary" onClick={()=>{ const data={...f}; if(!isEdit){data.id="u"+uid();data.avatar=f.name?.[0]||"?";data.createdAt=todayStr;} onSave(data); onClose(); }}>{isEdit?"保存修改":"新增用户"}</Button>
+        <Button variant="primary" onClick={()=>{ const data={...f}; if(!data.username){alert("请填写登录账号");return;} if(!isEdit){data.id="u"+uid();data.avatar=f.name?.[0]||"?";data.createdAt=todayStr;if(!data.password)data.password="1234";} onSave(data); onClose(); }}>{isEdit?"保存修改":"新增用户"}</Button>
       </div>
     </div>
   </Modal>;
@@ -847,6 +852,85 @@ const KanbanBoard = ({ tasks, bookings }) => {
   })}</div>;
 };
 
+// ==================== 登录认证 ====================
+const AUTH_KEY = "delon_auth_session";
+const saveSession = (user) => { try { localStorage.setItem(AUTH_KEY, JSON.stringify({ userId: user.id, loginAt: new Date().toISOString() })); } catch(e) {} };
+const loadSession = () => { try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch { return null; } };
+const clearSession = () => { try { localStorage.removeItem(AUTH_KEY); } catch(e) {} };
+
+const LoginScreen = ({ users, onLogin }) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showPw, setShowPw] = useState(false);
+
+  const handleLogin = () => {
+    if (!username.trim() || !password.trim()) { setError("请输入账号和密码"); return; }
+    const user = users.find(u => u.username === username.trim() && u.status === "active");
+    if (!user) { setError("账号不存在或已停用"); return; }
+    if (user.password !== password) { setError("密码错误"); return; }
+    onLogin(user);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50 flex items-center justify-center p-4" style={{height:"100dvh"}}>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white text-2xl font-bold mx-auto shadow-lg shadow-indigo-200">德</div>
+          <h1 className="text-xl font-bold text-gray-900 mt-4">德胧预订管理系统</h1>
+          <p className="text-sm text-gray-500 mt-1">AI Native · {HOTEL_INFO.name}</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-gray-600">登录账号</label>
+            <input value={username} onChange={e=>{setUsername(e.target.value);setError("")}} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="请输入账号" className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" autoFocus />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-gray-600">密码</label>
+            <div className="relative">
+              <input value={password} onChange={e=>{setPassword(e.target.value);setError("")}} onKeyDown={e=>e.key==="Enter"&&handleLogin()} type={showPw?"text":"password"} placeholder="请输入密码" className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none pr-10" />
+              <button type="button" onClick={()=>setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">{showPw?"隐藏":"显示"}</button>
+            </div>
+          </div>
+          {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700">{error}</div>}
+          <button onClick={handleLogin} className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-violet-700 transition-all shadow-sm active:scale-[0.98]">登 录</button>
+          <p className="text-[10px] text-gray-400 text-center">默认管理员: admin / 1234</p>
+        </div>
+        <p className="text-[10px] text-gray-400 text-center mt-6">德胧集团 · 预订管理系统 v2.1</p>
+      </div>
+    </div>
+  );
+};
+
+// ==================== 修改密码弹窗 ====================
+const ChangePasswordModal = ({ open, onClose, user, onSave }) => {
+  const [oldPw, setOldPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [err, setErr] = useState("");
+  useEffect(() => { if(open){ setOldPw(""); setNewPw(""); setConfirmPw(""); setErr(""); } }, [open]);
+  const handleSave = () => {
+    if (!oldPw || !newPw || !confirmPw) { setErr("请填写所有字段"); return; }
+    if (oldPw !== user.password) { setErr("原密码错误"); return; }
+    if (newPw.length < 4) { setErr("新密码至少4位"); return; }
+    if (newPw !== confirmPw) { setErr("两次密码不一致"); return; }
+    onSave(newPw);
+    onClose();
+  };
+  return <Modal open={open} onClose={onClose} title="修改密码" width="max-w-sm">
+    <div className="space-y-3">
+      <Input label="原密码" value={oldPw} onChange={v=>{setOldPw(v);setErr("")}} type="password" />
+      <Input label="新密码" value={newPw} onChange={v=>{setNewPw(v);setErr("")}} type="password" placeholder="至少4位" />
+      <Input label="确认新密码" value={confirmPw} onChange={v=>{setConfirmPw(v);setErr("")}} type="password" />
+      {err && <p className="text-xs text-red-600">{err}</p>}
+      <div className="flex justify-end gap-2 pt-2">
+        <Button variant="secondary" onClick={onClose}>取消</Button>
+        <Button variant="primary" onClick={handleSave}>确认修改</Button>
+      </div>
+    </div>
+  </Modal>;
+};
+
 // ==================== 主应用 ====================
 export default function App() {
   // ---- 核心状态 (从 localStorage 加载，首次使用示例数据) ----
@@ -879,7 +963,16 @@ export default function App() {
 
   // ---- 新增: 权限/用户/日志/配置 状态 (持久化) ----
   const [users, setUsers] = useState(() => loadFromStorage("users", SAMPLE_USERS));
-  const [currentUser, setCurrentUser] = useState(SAMPLE_USERS[0]);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const session = loadSession();
+    if (session) {
+      const stored = loadFromStorage("users", SAMPLE_USERS);
+      const u = stored.find(u => u.id === session.userId && u.status === "active");
+      if (u) return u;
+    }
+    return null;
+  });
+  const [showChangePw, setShowChangePw] = useState(false);
   const [roles] = useState(DEFAULT_ROLES);
   const [auditLogs, setAuditLogs] = useState(() => loadFromStorage("auditLogs", SAMPLE_LOGS));
   const [feishuConfig, setFeishuConfig] = useState(() => loadFromStorage("feishuConfig", DEFAULT_FEISHU_CONFIG));
@@ -1157,6 +1250,33 @@ export default function App() {
     addLog("SETTINGS_CHANGE", "系统", "重置所有数据为初始示例数据");
   };
 
+  // ---- 登录/退出处理 ----
+  const handleLogin = (user) => {
+    saveSession(user);
+    setCurrentUser(user);
+    // 直接写日志（此时 currentUser 尚未更新，手动指定用户信息）
+    setAuditLogs(prev => [{ id: "log" + uid(), userId: user.id, userName: user.name, action: "LOGIN", target: user.name, details: `用户 ${user.name} (${user.username}) 登录系统`, timestamp: nowTimestamp() }, ...prev]);
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setCurrentUser(null);
+    setPage("dashboard");
+    setSidebarOpen(false);
+  };
+
+  const handleChangePassword = (newPw) => {
+    if (!currentUser) return;
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, password: newPw } : u));
+    setCurrentUser(prev => ({ ...prev, password: newPw }));
+    addLog("SETTINGS_CHANGE", currentUser.name, `用户 ${currentUser.name} 修改了登录密码`);
+  };
+
+  // ---- 未登录时显示登录页面 ----
+  if (!currentUser) {
+    return <LoginScreen users={users} onLogin={handleLogin} />;
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 text-gray-900 font-sans" style={{ height: "100dvh" }}>
       {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
@@ -1172,8 +1292,11 @@ export default function App() {
         </button>)}</nav>
         {/* 当前用户 */}
         <div className="p-3 border-t border-gray-100">
-          <div className="flex items-center gap-2 px-2 mb-2"><div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold">{currentUser.avatar}</div><div className="min-w-0"><p className="text-xs font-medium text-gray-800 truncate">{currentUser.name}</p><p className="text-[10px] text-gray-400">{roles.find(r => r.id === currentUser.role)?.name}</p></div></div>
-          <Select value={currentUser.id} onChange={v => setCurrentUser(users.find(u => u.id === v) || users[0])} options={users.filter(u => u.status === "active").map(u => ({ value: u.id, label: `${u.name} (${roles.find(r => r.id === u.role)?.name})` }))} />
+          <div className="flex items-center gap-2 px-2 mb-2"><div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold">{currentUser.avatar}</div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-gray-800 truncate">{currentUser.name}</p><p className="text-[10px] text-gray-400">{roles.find(r => r.id === currentUser.role)?.name}{currentUser.feishuId ? " · 飞书已绑定" : ""}</p></div></div>
+          <div className="flex gap-1.5 mb-2">
+            <button onClick={() => setShowChangePw(true)} className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">修改密码</button>
+            <button onClick={handleLogout} className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">退出登录</button>
+          </div>
           <button onClick={() => { setShowAI(p => !p); setSidebarOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-medium hover:from-violet-700 hover:to-indigo-700 shadow-sm mt-2"><span>🤖</span><span>AI 助手</span></button>
         </div>
       </div>
@@ -1593,6 +1716,7 @@ export default function App() {
       <FeishuForwardModal booking={feishuData} venues={venues} open={showFeishu} onClose={()=>setShowFeishu(false)} type={feishuType} />
       <VenueFormModal open={showVenueForm} onClose={()=>{setShowVenueForm(false);setEditingVenue(null)}} onSave={handleSaveVenue} venue={editingVenue} />
       <UserFormModal open={showUserForm} onClose={()=>{setShowUserForm(false);setEditingUser(null)}} onSave={handleSaveUser} user={editingUser} roles={roles} />
+      <ChangePasswordModal open={showChangePw} onClose={()=>setShowChangePw(false)} user={currentUser} onSave={handleChangePassword} />
       <ConfirmDialog {...confirmDialog} onClose={()=>setConfirmDialog({open:false})} />
     </div>
   );
