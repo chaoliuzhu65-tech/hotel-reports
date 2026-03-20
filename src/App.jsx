@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import _ from "lodash";
 import * as XLSX from "xlsx";
+import { getBitableConfig, saveBitableConfig, isBitableEnabled, testBitableConnection, pullAllFromBitable, pushAllToBitable, FIELD_MAPPERS, enqueueWrite, createRecord, updateRecord, deleteRecord, fetchAllRecords } from "./bitableLayer.js";
 
 // ==================== 数据模型与常量 ====================
 const HOTEL_INFO = { name: "天津开元酒店", group: "德胧集团", code: "TJKY", address: "天津市滨海新区开元大道88号", lat: 39.0842, lng: 117.2005, phone: "022-88888888", coverImg: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" };
@@ -897,6 +898,8 @@ export default function App() {
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
   const [logFilter, setLogFilter] = useState("all");
   const [venueSettingsFilter, setVenueSettingsFilter] = useState("ALL");
+  const [bitableFormState, setBitableFormState] = useState(() => getBitableConfig() || { workerUrl: "", tableIds: { venues: "", bookings: "", roomBookings: "", auditLogs: "" } });
+  const [bitableStatus, setBitableStatus] = useState("");
 
   // ---- 权限检查 ----
   const hasPermission = useCallback((perm) => {
@@ -1471,9 +1474,31 @@ export default function App() {
 
                 {/* 数据管理 */}
                 {settingsTab==="data"&&<div className="space-y-4">
+                  {/* 飞书数据源配置 */}
+                  <Card className="p-4 sm:p-6 border-blue-200">
+                    <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">飞书</div><div><h3 className="text-base font-semibold">飞书多维表格数据源</h3><p className="text-xs text-gray-500">{isBitableEnabled()?"已连接 — 数据持久化到飞书云端":"未配置 — 当前数据仅保存在本地浏览器"}</p></div>{isBitableEnabled()&&<Badge className="bg-green-100 text-green-700 border-green-300 ml-auto">已启用</Badge>}</div>
+                    {hasPermission("feishu_config")&&<div className="space-y-3">
+                      <Input label="Worker 代理地址" value={bitableFormState.workerUrl} onChange={v=>setBitableFormState(p=>({...p,workerUrl:v}))} placeholder="https://delon-booking-proxy.your-account.workers.dev" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input label="场地表 Table ID" value={bitableFormState.tableIds?.venues||""} onChange={v=>setBitableFormState(p=>({...p,tableIds:{...p.tableIds,venues:v}}))} placeholder="tblXXXXXX" />
+                        <Input label="预订表 Table ID" value={bitableFormState.tableIds?.bookings||""} onChange={v=>setBitableFormState(p=>({...p,tableIds:{...p.tableIds,bookings:v}}))} placeholder="tblXXXXXX" />
+                        <Input label="客房表 Table ID" value={bitableFormState.tableIds?.roomBookings||""} onChange={v=>setBitableFormState(p=>({...p,tableIds:{...p.tableIds,roomBookings:v}}))} placeholder="tblXXXXXX" />
+                        <Input label="日志表 Table ID" value={bitableFormState.tableIds?.auditLogs||""} onChange={v=>setBitableFormState(p=>({...p,tableIds:{...p.tableIds,auditLogs:v}}))} placeholder="tblXXXXXX" />
+                      </div>
+                      <div className="flex items-center gap-2 pt-2 flex-wrap">
+                        <Button variant="primary" size="sm" onClick={()=>{saveBitableConfig(bitableFormState);setBitableStatus("配置已保存");addLog("FEISHU_CONFIG","飞书数据源","更新飞书多维表格数据源配置")}}>保存配置</Button>
+                        <Button variant="secondary" size="sm" onClick={async()=>{setBitableStatus("测试中...");const r=await testBitableConnection();setBitableStatus(r.success?"连接成功":"连接失败: "+r.message)}}>测试连接</Button>
+                        {isBitableEnabled()&&<Button variant="warning" size="sm" onClick={async()=>{if(!confirm("将本地数据上传到飞书多维表格？（已有数据不会被覆盖）"))return;setBitableStatus("正在上传...");try{const cfg=getBitableConfig();const localData={venues,bookings,roomBookings,auditLogs};const r=await pushAllToBitable(localData);setBitableStatus("上传完成");addLog("SETTINGS_CHANGE","数据同步","本地数据已同步到飞书多维表格")}catch(e){setBitableStatus("上传失败: "+e.message)}}}>上传本地数据到飞书</Button>}
+                        {isBitableEnabled()&&<Button variant="ai" size="sm" onClick={async()=>{if(!confirm("从飞书拉取数据将覆盖本地数据，确定继续？"))return;setBitableStatus("正在拉取...");try{const data=await pullAllFromBitable();if(data.venues)setVenues(data.venues);if(data.bookings)setBookings(data.bookings);if(data.roomBookings)setRoomBookings(data.roomBookings);if(data.auditLogs)setAuditLogs(data.auditLogs);setBitableStatus("拉取完成，已更新本地数据");addLog("SETTINGS_CHANGE","数据同步","从飞书多维表格拉取数据到本地")}catch(e){setBitableStatus("拉取失败: "+e.message)}}}>从飞书拉取数据</Button>}
+                      </div>
+                      {bitableStatus&&<p className={cn("text-xs mt-2",bitableStatus.includes("成功")||bitableStatus.includes("完成")?"text-green-600":bitableStatus.includes("失败")?"text-red-600":"text-gray-600")}>{bitableStatus}</p>}
+                    </div>}
+                    {!hasPermission("feishu_config")&&<p className="text-xs text-gray-400">需要飞书配置权限才能修改数据源设置</p>}
+                  </Card>
+
                   {/* 存储状态 */}
                   <Card className="p-4 sm:p-6">
-                    <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">DB</div><div><h3 className="text-base font-semibold">数据存储状态</h3><p className="text-xs text-gray-500">当前使用浏览器 localStorage 存储，数据保存在本设备</p></div></div>
+                    <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">DB</div><div><h3 className="text-base font-semibold">本地存储状态</h3><p className="text-xs text-gray-500">{isBitableEnabled()?"作为本地缓存使用，飞书为主数据源":"当前为唯一数据源（建议配置飞书数据源）"}</p></div></div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                       <div className="bg-gray-50 rounded-lg p-3 text-center"><div className="text-lg font-bold text-indigo-700">{venues.length}</div><div className="text-[10px] text-gray-500">场地</div></div>
                       <div className="bg-gray-50 rounded-lg p-3 text-center"><div className="text-lg font-bold text-green-700">{bookings.length}</div><div className="text-[10px] text-gray-500">预订</div></div>

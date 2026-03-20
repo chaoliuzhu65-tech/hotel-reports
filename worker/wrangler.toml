@@ -1,0 +1,11 @@
+name = "delon-booking-proxy"
+main = "index.js"
+compatibility_date = "2024-09-25"
+
+[vars]
+ALLOWED_ORIGINS = "https://chaoliuzhu65-tech.github.io,http://localhost:5173"
+
+# 以下敏感变量通过 Cloudflare Dashboard 的 Secrets 设置，不要写在这里
+# FEISHU_APP_ID = "cli_xxxxxxxxxx"
+# FEISHU_APP_SECRET = "xxxxxxxxxxxxxxxx"
+# BITABLE_APP_TOKEN = "xxxxxxxxxxxxxxx"
