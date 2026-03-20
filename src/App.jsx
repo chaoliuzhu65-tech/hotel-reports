@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import _ from "lodash";
+import * as XLSX from "xlsx";
 
 // ==================== 数据模型与常量 ====================
 const HOTEL_INFO = { name: "天津开元酒店", group: "德胧集团", code: "TJKY", address: "天津市滨海新区开元大道88号", lat: 39.0842, lng: 117.2005, phone: "022-88888888", coverImg: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" };
@@ -141,6 +142,110 @@ const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
 const getFirstDayOfMonth = (y, m) => new Date(y, m, 1).getDay();
 const addDays = (dateStr, n) => { const d = new Date(dateStr); d.setDate(d.getDate()+n); return fmt(d); };
 const nowTimestamp = () => { const n = new Date(); return fmt(n) + " " + fmtTime(n); };
+
+// ==================== 数据持久化 (localStorage) ====================
+const STORAGE_KEY = "delon_booking_system_v2";
+const saveToStorage = (key, data) => { try { const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); all[key] = data; all._lastSaved = new Date().toISOString(); localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch(e) { console.warn("存储失败:", e); } };
+const loadFromStorage = (key, fallback) => { try { const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); return all[key] !== undefined ? all[key] : fallback; } catch(e) { return fallback; } };
+const clearStorage = () => { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} };
+const getStorageInfo = () => { try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return { size: 0, lastSaved: null }; return { size: new Blob([raw]).size, lastSaved: JSON.parse(raw)._lastSaved || null }; } catch(e) { return { size: 0, lastSaved: null }; } };
+
+// ==================== 图片压缩上传 ====================
+const MAX_IMG_SIZE = 500 * 1024; // 500KB
+const compressImage = (file) => new Promise((resolve, reject) => {
+  if (file.size > 5 * 1024 * 1024) { reject(new Error("图片不能超过5MB")); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let w = img.width, h = img.height;
+      const maxDim = 800;
+      if (w > maxDim || h > maxDim) { const ratio = Math.min(maxDim / w, maxDim / h); w *= ratio; h *= ratio; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      let quality = 0.8;
+      let result = canvas.toDataURL("image/jpeg", quality);
+      while (result.length > MAX_IMG_SIZE * 1.37 && quality > 0.2) { quality -= 0.1; result = canvas.toDataURL("image/jpeg", quality); }
+      resolve(result);
+    };
+    img.onerror = () => reject(new Error("图片加载失败"));
+    img.src = e.target.result;
+  };
+  reader.onerror = () => reject(new Error("文件读取失败"));
+  reader.readAsDataURL(file);
+});
+
+// ==================== Excel 导出/导入 ====================
+const exportToExcel = (data, headers, filename) => {
+  const ws = XLSX.utils.json_to_sheet(data, { header: headers.map(h => h.key) });
+  // 设置中文表头
+  headers.forEach((h, i) => { const col = XLSX.utils.encode_col(i); ws[col + "1"] = { t: "s", v: h.label }; });
+  ws["!cols"] = headers.map(h => ({ wch: h.width || 15 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  XLSX.writeFile(wb, filename);
+};
+
+const VENUE_EXPORT_HEADERS = [
+  { key: "name", label: "场地名称", width: 15 }, { key: "typeName", label: "场地类型", width: 10 },
+  { key: "floor", label: "楼层", width: 8 }, { key: "capacity", label: "容纳人数", width: 10 },
+  { key: "price", label: "价格", width: 12 }, { key: "status", label: "状态", width: 8 },
+  { key: "description", label: "描述", width: 30 },
+];
+const BOOKING_EXPORT_HEADERS = [
+  { key: "number", label: "预订编号", width: 20 }, { key: "typeName", label: "类型", width: 10 },
+  { key: "eventName", label: "活动名称", width: 25 }, { key: "date", label: "日期", width: 12 },
+  { key: "timeSlotName", label: "时段", width: 8 }, { key: "venueName", label: "场地", width: 12 },
+  { key: "statusName", label: "状态", width: 8 }, { key: "organizer", label: "主办方", width: 15 },
+  { key: "contactName", label: "联系人", width: 10 }, { key: "contactPhone", label: "联系电话", width: 15 },
+  { key: "expectedAttendance", label: "预计人数", width: 10 }, { key: "guaranteedAttendance", label: "保证人数", width: 10 },
+  { key: "salesPerson", label: "销售", width: 10 }, { key: "totalAmount", label: "总金额", width: 12 },
+  { key: "paymentStatusName", label: "付款状态", width: 10 }, { key: "paymentTerms", label: "付款方式", width: 10 },
+  { key: "notes", label: "备注", width: 30 },
+];
+const ROOM_EXPORT_HEADERS = [
+  { key: "guestName", label: "客人姓名", width: 12 }, { key: "phone", label: "电话", width: 15 },
+  { key: "checkIn", label: "入住日期", width: 12 }, { key: "checkOut", label: "离店日期", width: 12 },
+  { key: "roomType", label: "房型", width: 12 }, { key: "roomCount", label: "间数", width: 8 },
+  { key: "rate", label: "房价", width: 10 }, { key: "source", label: "来源", width: 10 },
+  { key: "company", label: "公司", width: 15 }, { key: "salesPerson", label: "销售", width: 10 },
+  { key: "statusName", label: "状态", width: 8 }, { key: "paymentStatusName", label: "付款状态", width: 10 },
+];
+const LOG_EXPORT_HEADERS = [
+  { key: "timestamp", label: "时间", width: 20 }, { key: "userName", label: "操作人", width: 10 },
+  { key: "actionName", label: "操作类型", width: 12 }, { key: "target", label: "操作对象", width: 15 },
+  { key: "details", label: "详细内容", width: 40 },
+];
+
+const generateImportTemplate = (type) => {
+  const templates = {
+    venues: { headers: ["场地名称","场地类型(宴会厅/会议室/包厢)","楼层","容纳人数","价格","描述"], example: ["开元厅","宴会厅","5F","200","3088","五楼主宴会厅"] },
+    bookings: { headers: ["活动名称","类型(会议/宴会/婚宴/包厢宴请)","日期(YYYY-MM-DD)","时段(上午/中午/下午/晚上)","场地名称","主办方","联系人","联系电话","预计人数","保证人数","销售","总金额","付款方式","备注"], example: ["示例年会","宴会","2026-04-01","晚上","开元厅","示例公司","张三","13800138000","100","80","夏美娟","50000","预付50%","请提前布置"] },
+    rooms: { headers: ["客人姓名","电话","入住日期","离店日期","房型","间数","房价","来源","公司","销售","备注"], example: ["张三","13800138000","2026-04-01","2026-04-03","豪华大床房","1","580","协议客户","示例公司","夏美娟",""] },
+  };
+  const t = templates[type]; if (!t) return;
+  const ws = XLSX.utils.aoa_to_sheet([t.headers, t.example]);
+  ws["!cols"] = t.headers.map(() => ({ wch: 18 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "导入模板");
+  XLSX.writeFile(wb, `${type}_import_template.xlsx`);
+};
+
+const parseImportFile = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws);
+      resolve(data);
+    } catch (err) { reject(err); }
+  };
+  reader.onerror = () => reject(new Error("文件读取失败"));
+  reader.readAsArrayBuffer(file);
+});
 
 const AI_SUGGESTIONS = {
   pricing: (b) => b.type === "WEDDING" ? `💡 AI建议: 婚宴${b.tableCount}桌，建议赠送婚房+迎宾红地毯` : b.type === "MEETING" ? `💡 AI建议: 会议${b.expectedAttendance}人，建议搭配茶歇(¥45/人)` : `💡 AI建议: 该时段平均消费¥${Math.round(Math.random()*10000+5000)}`,
@@ -421,10 +526,20 @@ const MonthCalendar = ({ bookings, onDateSelect, selectedDate }) => {
 const VenueFormModal = ({ open, onClose, onSave, venue }) => {
   const isEdit = !!venue;
   const [f, setF] = useState({ name:"", type:"MEETING", floor:"", capacity:"", halfDayRate:"", pricePerTable:"", minSpend:"", description:"", img:"", recommendedDishes:"", status:"active" });
-  useEffect(()=>{ if(venue) setF({...venue, capacity:String(venue.capacity||""), halfDayRate:String(venue.halfDayRate||""), pricePerTable:String(venue.pricePerTable||""), minSpend:String(venue.minSpend||"")}); else setF({ name:"", type:"MEETING", floor:"", capacity:"", halfDayRate:"", pricePerTable:"", minSpend:"", description:"", img:"", recommendedDishes:"", status:"active" }); },[venue, open]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState("");
+  const fileRef = useRef(null);
+  useEffect(()=>{ if(venue) setF({...venue, capacity:String(venue.capacity||""), halfDayRate:String(venue.halfDayRate||""), pricePerTable:String(venue.pricePerTable||""), minSpend:String(venue.minSpend||"")}); else setF({ name:"", type:"MEETING", floor:"", capacity:"", halfDayRate:"", pricePerTable:"", minSpend:"", description:"", img:"", recommendedDishes:"", status:"active" }); setUploadErr(""); },[venue, open]);
   const u=(k,v)=>setF(p=>({...p,[k]:v}));
   const priceLabel = f.type==="BANQUET"||f.type==="WEDDING"?"单桌价格(¥)":f.type==="PRIVATE"?"最低消费(¥)":"半天租金(¥)";
   const priceKey = f.type==="BANQUET"||f.type==="WEDDING"?"pricePerTable":f.type==="PRIVATE"?"minSpend":"halfDayRate";
+  const handleImgUpload = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploading(true); setUploadErr("");
+    try { const dataUrl = await compressImage(file); u("img", dataUrl); }
+    catch (err) { setUploadErr(err.message); }
+    finally { setUploading(false); if(fileRef.current) fileRef.current.value=""; }
+  };
   return <Modal open={open} onClose={onClose} title={isEdit?"编辑场地":"新增场地"}>
     <div className="space-y-3">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -437,7 +552,23 @@ const VenueFormModal = ({ open, onClose, onSave, venue }) => {
         <Input label={priceLabel} type="number" value={f[priceKey]} onChange={v=>u(priceKey,v)} />
         <Select label="状态" value={f.status} onChange={v=>u("status",v)} options={[{value:"active",label:"启用"},{value:"inactive",label:"停用"}]} />
       </div>
-      <Input label="场地图片URL" value={f.img} onChange={v=>u("img",v)} placeholder="https://..." />
+      {/* 图片上传区 */}
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-600">场地图片</label>
+        <div className="flex items-start gap-3">
+          <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 overflow-hidden shrink-0 flex items-center justify-center">
+            {f.img ? <img src={f.img} alt="" className="w-full h-full object-cover" /> : <span className="text-gray-300 text-2xl">{f.type==="BANQUET"?"🏛️":f.type==="MEETING"?"💼":"🍽️"}</span>}
+          </div>
+          <div className="flex-1 space-y-1.5">
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImgUpload} className="hidden" />
+            <Button variant="secondary" size="sm" onClick={()=>fileRef.current?.click()} disabled={uploading}>{uploading ? "压缩中..." : "📷 上传图片"}</Button>
+            <p className="text-[10px] text-gray-400">支持 JPG/PNG/WebP，最大5MB，自动压缩至500KB以内</p>
+            {uploadErr && <p className="text-[10px] text-red-500">{uploadErr}</p>}
+            {f.img && <button onClick={()=>u("img","")} className="text-[10px] text-red-500 hover:underline">移除图片</button>}
+            <Input placeholder="或输入图片URL: https://..." value={f.img?.startsWith("data:")?"":(f.img||"")} onChange={v=>u("img",v)} className="mt-1" />
+          </div>
+        </div>
+      </div>
       <Textarea label="场地描述" value={f.description} onChange={v=>u("description",v)} placeholder="场地特色、设施等" />
       {f.type==="PRIVATE" && <Textarea label="推荐菜品" value={f.recommendedDishes} onChange={v=>u("recommendedDishes",v)} placeholder="松茸炖花胶、龙虾刺身..." />}
       <div className="flex justify-end gap-2 pt-2">
@@ -717,13 +848,13 @@ const KanbanBoard = ({ tasks, bookings }) => {
 
 // ==================== 主应用 ====================
 export default function App() {
-  // ---- 核心状态 ----
+  // ---- 核心状态 (从 localStorage 加载，首次使用示例数据) ----
   const [page, setPage] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [bookings, setBookings] = useState(SAMPLE_BOOKINGS);
-  const [roomBookings, setRoomBookings] = useState(SAMPLE_ROOM_BOOKINGS);
-  const [tasks] = useState(SAMPLE_TASKS);
-  const [venues, setVenues] = useState(SAMPLE_VENUES_INIT);
+  const [bookings, setBookings] = useState(() => loadFromStorage("bookings", SAMPLE_BOOKINGS));
+  const [roomBookings, setRoomBookings] = useState(() => loadFromStorage("roomBookings", SAMPLE_ROOM_BOOKINGS));
+  const [tasks] = useState(() => loadFromStorage("tasks", SAMPLE_TASKS));
+  const [venues, setVenues] = useState(() => loadFromStorage("venues", SAMPLE_VENUES_INIT));
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [venueFilter, setVenueFilter] = useState("ALL");
   const [calendarView, setCalendarView] = useState("day"); // "day" | "panoramic"
@@ -745,13 +876,13 @@ export default function App() {
   const [showAI, setShowAI] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // ---- 新增: 权限/用户/日志/配置 状态 ----
-  const [users, setUsers] = useState(SAMPLE_USERS);
-  const [currentUser, setCurrentUser] = useState(SAMPLE_USERS[0]); // 默认管理员
+  // ---- 新增: 权限/用户/日志/配置 状态 (持久化) ----
+  const [users, setUsers] = useState(() => loadFromStorage("users", SAMPLE_USERS));
+  const [currentUser, setCurrentUser] = useState(SAMPLE_USERS[0]);
   const [roles] = useState(DEFAULT_ROLES);
-  const [auditLogs, setAuditLogs] = useState(SAMPLE_LOGS);
-  const [feishuConfig, setFeishuConfig] = useState(DEFAULT_FEISHU_CONFIG);
-  const [approvals, setApprovals] = useState(SAMPLE_APPROVALS);
+  const [auditLogs, setAuditLogs] = useState(() => loadFromStorage("auditLogs", SAMPLE_LOGS));
+  const [feishuConfig, setFeishuConfig] = useState(() => loadFromStorage("feishuConfig", DEFAULT_FEISHU_CONFIG));
+  const [approvals, setApprovals] = useState(() => loadFromStorage("approvals", SAMPLE_APPROVALS));
 
   // ---- 设置页面状态 ----
   const [settingsTab, setSettingsTab] = useState("venues");
@@ -772,6 +903,16 @@ export default function App() {
     const role = roles.find(r => r.id === currentUser?.role);
     return role?.permissions?.includes(perm) ?? false;
   }, [currentUser, roles]);
+
+  // ---- 自动保存到 localStorage ----
+  useEffect(() => { saveToStorage("bookings", bookings); }, [bookings]);
+  useEffect(() => { saveToStorage("roomBookings", roomBookings); }, [roomBookings]);
+  useEffect(() => { saveToStorage("venues", venues); }, [venues]);
+  useEffect(() => { saveToStorage("users", users); }, [users]);
+  useEffect(() => { saveToStorage("auditLogs", auditLogs); }, [auditLogs]);
+  useEffect(() => { saveToStorage("feishuConfig", feishuConfig); }, [feishuConfig]);
+  useEffect(() => { saveToStorage("approvals", approvals); }, [approvals]);
+  useEffect(() => { saveToStorage("tasks", tasks); }, [tasks]);
 
   // ---- 审计日志记录 ----
   const addLog = useCallback((action, target, details) => {
@@ -884,6 +1025,134 @@ export default function App() {
     { id: "kanban", icon: "📌", label: "跟单看板" }, { id: "reports", icon: "📈", label: "数据分析" },
     { id: "settings", icon: "⚙️", label: "系统设置" },
   ];
+
+  // ---- 场地卡片渲染 ----
+  const renderVenueCard = (v) => (
+    <Card key={v.id} className={cn("p-3 sm:p-4", v.status === "inactive" && "opacity-60")}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0">{v.img ? <img src={v.img} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">{v.type === "BANQUET" ? "🏛️" : v.type === "MEETING" ? "💼" : "🍽️"}</div>}</div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5"><h4 className="font-semibold text-sm">{v.name}</h4><Badge className={v.status === "active" ? "bg-green-100 text-green-700 border-green-300" : "bg-gray-100 text-gray-500 border-gray-300"}>{v.status === "active" ? "启用" : "停用"}</Badge><Badge className="bg-indigo-50 text-indigo-700 border-indigo-200">{VENUE_TYPES[v.type]}</Badge></div>
+            <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500"><span>{v.floor}</span><span>·</span><span>{v.capacity}人</span><span>·</span><span>{v.pricePerTable ? `¥${v.pricePerTable}/桌` : v.halfDayRate ? `¥${v.halfDayRate}/半天` : v.minSpend ? `¥${v.minSpend}起` : ""}</span></div>
+            {v.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{v.description}</p>}
+          </div>
+        </div>
+        {hasPermission("venue_manage") && <div className="flex items-center gap-1.5 shrink-0">
+          <Button variant="ghost" size="sm" onClick={() => { setEditingVenue(v); setShowVenueForm(true); }}>✏️</Button>
+          <Button variant="ghost" size="sm" onClick={() => handleToggleVenue(v)}>{v.status === "active" ? "⏸️" : "▶️"}</Button>
+          <Button variant="ghost" size="sm" onClick={() => setConfirmDialog({ open: true, title: "确认删除", message: `确定要删除场地「${v.name}」吗？此操作不可撤销。`, onConfirm: () => handleDeleteVenue(v) })} className="text-red-500">🗑️</Button>
+        </div>}
+      </div>
+    </Card>
+  );
+
+  // ---- 数据导出处理 ----
+  const handleExportVenues = () => {
+    const data = venues.map(v => ({ name: v.name, typeName: VENUE_TYPES[v.type], floor: v.floor, capacity: v.capacity, price: v.pricePerTable || v.halfDayRate || v.minSpend || "", status: v.status === "active" ? "启用" : "停用", description: v.description || "" }));
+    exportToExcel(data, VENUE_EXPORT_HEADERS, `场地列表_${todayStr}.xlsx`);
+    addLog("SETTINGS_CHANGE", "数据导出", "导出场地列表 Excel");
+  };
+  const handleExportBookings = () => {
+    const data = bookings.map(b => ({ number: b.number, typeName: BOOKING_TYPES[b.type], eventName: b.eventName, date: b.date, timeSlotName: DEFAULT_TIME_SLOTS.find(s => s.id === b.timeSlotId)?.label || "", venueName: venues.find(v => v.id === b.venueId)?.name || "", statusName: BOOKING_STATUS[b.status], organizer: b.organizer, contactName: b.contactName, contactPhone: b.contactPhone, expectedAttendance: b.expectedAttendance, guaranteedAttendance: b.guaranteedAttendance, salesPerson: b.salesPerson, totalAmount: b.totalAmount, paymentStatusName: PAYMENT_STATUS[b.paymentStatus], paymentTerms: b.paymentTerms, notes: b.notes || "" }));
+    exportToExcel(data, BOOKING_EXPORT_HEADERS, `预订列表_${todayStr}.xlsx`);
+    addLog("SETTINGS_CHANGE", "数据导出", "导出预订列表 Excel");
+  };
+  const handleExportRooms = () => {
+    const data = roomBookings.map(r => ({ guestName: r.guestName, phone: r.phone, checkIn: r.checkIn, checkOut: r.checkOut, roomType: r.roomType, roomCount: r.roomCount, rate: r.rate, source: r.source, company: r.company || "", salesPerson: r.salesPerson, statusName: BOOKING_STATUS[r.status], paymentStatusName: PAYMENT_STATUS[r.paymentStatus] }));
+    exportToExcel(data, ROOM_EXPORT_HEADERS, `客房预订_${todayStr}.xlsx`);
+    addLog("SETTINGS_CHANGE", "数据导出", "导出客房预订 Excel");
+  };
+  const handleExportLogs = () => {
+    const data = auditLogs.map(l => ({ timestamp: l.timestamp, userName: l.userName, actionName: LOG_ACTIONS[l.action] || l.action, target: l.target, details: l.details }));
+    exportToExcel(data, LOG_EXPORT_HEADERS, `操作日志_${todayStr}.xlsx`);
+  };
+  const handleExportAll = () => { handleExportVenues(); handleExportBookings(); handleExportRooms(); handleExportLogs(); };
+
+  // ---- 数据导入处理 (仅超管) ----
+  const importFileRef = useRef(null);
+  const [importType, setImportType] = useState("venues");
+  const [importPreview, setImportPreview] = useState(null);
+  const [importStatus, setImportStatus] = useState("");
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setImportStatus("解析中...");
+    try {
+      const data = await parseImportFile(file);
+      setImportPreview(data);
+      setImportStatus(`已解析 ${data.length} 条记录，请确认导入`);
+    } catch (err) {
+      setImportStatus("解析失败: " + err.message);
+      setImportPreview(null);
+    }
+    if (importFileRef.current) importFileRef.current.value = "";
+  };
+
+  const handleConfirmImport = () => {
+    if (!importPreview || importPreview.length === 0) return;
+    const typeRev = {"宴会厅":"BANQUET","会议室":"MEETING","包厢":"PRIVATE"};
+    const typeBookingRev = {"会议":"MEETING","宴会":"BANQUET","婚宴":"WEDDING","包厢宴请":"PRIVATE_DINING"};
+    const slotRev = {"上午":"morning","中午":"noon","下午":"afternoon","晚上":"evening"};
+    let count = 0;
+    if (importType === "venues") {
+      const newVenues = importPreview.map(row => ({
+        id: "v" + uid(), name: row["场地名称"] || "", type: typeRev[row["场地类型(宴会厅/会议室/包厢)"]] || "MEETING",
+        floor: row["楼层"] || "", capacity: Number(row["容纳人数"]) || 0,
+        pricePerTable: typeRev[row["场地类型(宴会厅/会议室/包厢)"]] === "BANQUET" ? Number(row["价格"]) || 0 : 0,
+        halfDayRate: typeRev[row["场地类型(宴会厅/会议室/包厢)"]] === "MEETING" ? Number(row["价格"]) || 0 : 0,
+        minSpend: typeRev[row["场地类型(宴会厅/会议室/包厢)"]] === "PRIVATE" ? Number(row["价格"]) || 0 : 0,
+        timeSlots: DEFAULT_TIME_SLOTS, status: "active", img: "", description: row["描述"] || "",
+      }));
+      setVenues(prev => [...prev, ...newVenues]);
+      count = newVenues.length;
+    } else if (importType === "bookings") {
+      const newBookings = importPreview.map(row => ({
+        id: "b" + uid(), number: "EO-" + todayStr.replace(/-/g, "") + "-" + uid().slice(0, 3),
+        type: typeBookingRev[row["类型(会议/宴会/婚宴/包厢宴请)"]] || "MEETING",
+        venueId: venues.find(v => v.name === row["场地名称"])?.id || venues[0]?.id || "",
+        date: row["日期(YYYY-MM-DD)"] || todayStr, timeSlotId: slotRev[row["时段(上午/中午/下午/晚上)"]] || "morning",
+        status: "TENTATIVE", eventName: row["活动名称"] || "", organizer: row["主办方"] || "",
+        contactName: row["联系人"] || "", contactPhone: row["联系电话"] || "",
+        expectedAttendance: Number(row["预计人数"]) || 0, guaranteedAttendance: Number(row["保证人数"]) || 0,
+        salesPerson: row["销售"] || currentUser.name, salesPhone: "",
+        totalAmount: Number(row["总金额"]) || 0, paymentStatus: "UNPAID",
+        paymentTerms: row["付款方式"] || "", notes: row["备注"] || "",
+        departments: [], createdAt: todayStr, updatedAt: todayStr,
+      }));
+      setBookings(prev => [...prev, ...newBookings]);
+      count = newBookings.length;
+    } else if (importType === "rooms") {
+      const newRooms = importPreview.map(row => ({
+        id: "r" + uid(), guestName: row["客人姓名"] || "", phone: row["电话"] || "",
+        checkIn: row["入住日期"] || todayStr, checkOut: row["离店日期"] || addDays(todayStr, 1),
+        roomType: row["房型"] || "", roomCount: Number(row["间数"]) || 1,
+        rate: Number(row["房价"]) || 0, source: row["来源"] || "",
+        company: row["公司"] || "", salesPerson: row["销售"] || currentUser.name,
+        status: "CONFIRMED", paymentStatus: "UNPAID", notes: row["备注"] || "",
+      }));
+      setRoomBookings(prev => [...prev, ...newRooms]);
+      count = newRooms.length;
+    }
+    addLog("SETTINGS_CHANGE", "数据导入", `导入 ${count} 条${importType === "venues" ? "场地" : importType === "bookings" ? "预订" : "客房"}记录`);
+    setImportStatus(`成功导入 ${count} 条记录`);
+    setImportPreview(null);
+  };
+
+  // ---- 存储信息 ----
+  const storageInfo = useMemo(() => getStorageInfo(), [bookings, venues, users, auditLogs, roomBookings]);
+
+  const handleClearAllData = () => {
+    clearStorage();
+    setVenues(SAMPLE_VENUES_INIT);
+    setBookings(SAMPLE_BOOKINGS);
+    setRoomBookings(SAMPLE_ROOM_BOOKINGS);
+    setUsers(SAMPLE_USERS);
+    setAuditLogs(SAMPLE_LOGS);
+    setFeishuConfig(DEFAULT_FEISHU_CONFIG);
+    setApprovals(SAMPLE_APPROVALS);
+    addLog("SETTINGS_CHANGE", "系统", "重置所有数据为初始示例数据");
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-900 font-sans" style={{ height: "100dvh" }}>
@@ -1090,6 +1359,7 @@ export default function App() {
                   {id:"logs",label:"操作日志",count:auditLogs.length},
                   {id:"approvals",label:"审批管理",count:pendingApprovals.length},
                   {id:"feishu",label:"飞书配置"},
+                  {id:"data",label:"数据管理"},
                 ]} active={settingsTab} onChange={setSettingsTab} />
 
                 {/* 场地管理 */}
@@ -1098,23 +1368,18 @@ export default function App() {
                     <Tabs tabs={[{id:"ALL",label:"全部"},{id:"BANQUET",label:"宴会厅"},{id:"MEETING",label:"会议室"},{id:"PRIVATE",label:"包厢"}]} active={venueSettingsFilter} onChange={setVenueSettingsFilter} />
                     {hasPermission("venue_manage")&&<Button variant="primary" size="sm" onClick={()=>{setEditingVenue(null);setShowVenueForm(true)}}>+ 新增场地</Button>}
                   </div>
-                  <div className="space-y-2">{venues.filter(v=>venueSettingsFilter==="ALL"||v.type===venueSettingsFilter).map(v=><Card key={v.id} className={cn("p-3 sm:p-4",v.status==="inactive"&&"opacity-60")}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0">{v.img?<img src={v.img} alt="" className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">{v.type==="BANQUET"?"🏛️":v.type==="MEETING"?"💼":"🍽️"}</div>}</div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5"><h4 className="font-semibold text-sm">{v.name}</h4><Badge className={v.status==="active"?"bg-green-100 text-green-700 border-green-300":"bg-gray-100 text-gray-500 border-gray-300"}>{v.status==="active"?"启用":"停用"}</Badge><Badge className="bg-indigo-50 text-indigo-700 border-indigo-200">{VENUE_TYPES[v.type]}</Badge></div>
-                          <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500"><span>{v.floor}</span><span>·</span><span>{v.capacity}人</span><span>·</span><span>{v.pricePerTable?`¥${v.pricePerTable}/桌`:v.halfDayRate?`¥${v.halfDayRate}/半天`:v.minSpend?`¥${v.minSpend}起`:""}</span></div>
-                          {v.description&&<p className="text-xs text-gray-400 mt-0.5 truncate">{v.description}</p>}
-                        </div>
-                      </div>
-                      {hasPermission("venue_manage")&&<div className="flex items-center gap-1.5 shrink-0">
-                        <Button variant="ghost" size="sm" onClick={()=>{setEditingVenue(v);setShowVenueForm(true)}}>✏️</Button>
-                        <Button variant="ghost" size="sm" onClick={()=>handleToggleVenue(v)}>{v.status==="active"?"⏸️":"▶️"}</Button>
-                        <Button variant="ghost" size="sm" onClick={()=>setConfirmDialog({open:true,title:"确认删除",message:`确定要删除场地「${v.name}」吗？此操作不可撤销。`,onConfirm:()=>handleDeleteVenue(v)})} className="text-red-500">🗑️</Button>
-                      </div>}
-                    </div>
-                  </Card>)}</div>
+                  <div className="space-y-2">{(() => {
+                    const fv = venues.filter(v=>venueSettingsFilter==="ALL"||v.type===venueSettingsFilter);
+                    if (venueSettingsFilter === "ALL") {
+                      const typeOrder = ["BANQUET","MEETING","PRIVATE"];
+                      const grouped = _.groupBy(fv, "type");
+                      return typeOrder.filter(t=>grouped[t]).flatMap(t => [
+                        <div key={"hdr-"+t} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold mt-1 first:mt-0", t==="BANQUET"?"bg-rose-50 text-rose-700":t==="MEETING"?"bg-blue-50 text-blue-700":"bg-amber-50 text-amber-700")}>{VENUE_TYPES[t]} ({grouped[t].length})</div>,
+                        ...grouped[t].map(v => renderVenueCard(v))
+                      ]);
+                    }
+                    return fv.map(v => renderVenueCard(v));
+                  })()}</div>
                 </div>}
 
                 {/* 用户权限管理 */}
@@ -1203,6 +1468,76 @@ export default function App() {
                     ].map((f,i)=><div key={i} className="bg-gray-50 rounded-lg p-3 border border-gray-100"><div className="flex items-center gap-2 mb-1"><span>{f.icon}</span><span className="text-sm font-medium">{f.title}</span></div><p className="text-xs text-gray-500">{f.desc}</p></div>)}</div>
                   </Card>
                 </div>}
+
+                {/* 数据管理 */}
+                {settingsTab==="data"&&<div className="space-y-4">
+                  {/* 存储状态 */}
+                  <Card className="p-4 sm:p-6">
+                    <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">DB</div><div><h3 className="text-base font-semibold">数据存储状态</h3><p className="text-xs text-gray-500">当前使用浏览器 localStorage 存储，数据保存在本设备</p></div></div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                      <div className="bg-gray-50 rounded-lg p-3 text-center"><div className="text-lg font-bold text-indigo-700">{venues.length}</div><div className="text-[10px] text-gray-500">场地</div></div>
+                      <div className="bg-gray-50 rounded-lg p-3 text-center"><div className="text-lg font-bold text-green-700">{bookings.length}</div><div className="text-[10px] text-gray-500">预订</div></div>
+                      <div className="bg-gray-50 rounded-lg p-3 text-center"><div className="text-lg font-bold text-violet-700">{roomBookings.length}</div><div className="text-[10px] text-gray-500">客房</div></div>
+                      <div className="bg-gray-50 rounded-lg p-3 text-center"><div className="text-lg font-bold text-amber-700">{auditLogs.length}</div><div className="text-[10px] text-gray-500">日志</div></div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-3">
+                      <span>存储占用: {storageInfo.size ? (storageInfo.size / 1024).toFixed(1) + " KB" : "0 KB"}</span>
+                      <span>最后保存: {storageInfo.lastSaved ? new Date(storageInfo.lastSaved).toLocaleString("zh-CN") : "未保存"}</span>
+                    </div>
+                    <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-xs text-amber-800 font-medium">注意事项</p>
+                      <p className="text-xs text-amber-700 mt-1">当前数据存储在浏览器 localStorage 中。清除浏览器缓存或更换设备/浏览器后数据不会自动同步。建议定期导出数据备份。后续版本将支持云端数据库（阿里云 MySQL 或飞书多维表格）实现多端同步。</p>
+                    </div>
+                  </Card>
+
+                  {/* 数据导出 */}
+                  <Card className="p-4 sm:p-6">
+                    <h3 className="text-base font-semibold mb-3">数据导出</h3>
+                    <p className="text-xs text-gray-500 mb-4">导出为 Excel 格式，可直接导入飞书多维表格</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                      <Button variant="secondary" size="sm" onClick={handleExportVenues}>📋 场地列表</Button>
+                      <Button variant="secondary" size="sm" onClick={handleExportBookings}>📅 预订列表</Button>
+                      <Button variant="secondary" size="sm" onClick={handleExportRooms}>🛏️ 客房预订</Button>
+                      <Button variant="secondary" size="sm" onClick={handleExportLogs}>📝 操作日志</Button>
+                    </div>
+                    <Button variant="primary" size="sm" onClick={handleExportAll}>📦 一键导出全部数据</Button>
+                  </Card>
+
+                  {/* 导入模板下载 */}
+                  <Card className="p-4 sm:p-6">
+                    <h3 className="text-base font-semibold mb-3">导入模板下载</h3>
+                    <p className="text-xs text-gray-500 mb-4">下载标准模板填写数据，然后通过下方导入功能批量导入</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => generateImportTemplate("venues")}>场地模板</Button>
+                      <Button variant="secondary" size="sm" onClick={() => generateImportTemplate("bookings")}>预订模板</Button>
+                      <Button variant="secondary" size="sm" onClick={() => generateImportTemplate("rooms")}>客房模板</Button>
+                    </div>
+                  </Card>
+
+                  {/* 数据导入 (仅超管) */}
+                  {hasPermission("user_manage") && <Card className="p-4 sm:p-6 border-red-200">
+                    <div className="flex items-center gap-2 mb-3"><h3 className="text-base font-semibold">数据导入</h3><Badge className="bg-red-100 text-red-700 border-red-300">仅超级管理员</Badge></div>
+                    <p className="text-xs text-gray-500 mb-4">导入操作会新增数据（不会覆盖已有记录）。请先下载模板，按格式填写后上传。</p>
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end mb-3">
+                      <Select label="导入类型" value={importType} onChange={setImportType} options={[{value:"venues",label:"场地"},{value:"bookings",label:"预订"},{value:"rooms",label:"客房"}]} className="w-40" />
+                      <div className="flex-1"><input ref={importFileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleImportFile} className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-gray-300 file:text-sm file:bg-white file:text-gray-700 hover:file:bg-gray-50" /></div>
+                    </div>
+                    {importStatus && <p className={cn("text-xs mb-2", importStatus.includes("成功") ? "text-green-600" : importStatus.includes("失败") ? "text-red-600" : "text-gray-600")}>{importStatus}</p>}
+                    {importPreview && importPreview.length > 0 && <div className="mb-3">
+                      <p className="text-xs font-medium text-gray-700 mb-1">预览（前5条）:</p>
+                      <div className="overflow-x-auto border border-gray-200 rounded-lg"><table className="w-full text-xs"><thead><tr className="bg-gray-50">{Object.keys(importPreview[0]).map(k => <th key={k} className="px-2 py-1.5 text-left border-b font-medium text-gray-600 whitespace-nowrap">{k}</th>)}</tr></thead><tbody>{importPreview.slice(0, 5).map((row, i) => <tr key={i} className="border-b border-gray-100">{Object.values(row).map((v, j) => <td key={j} className="px-2 py-1 text-gray-700 whitespace-nowrap">{String(v)}</td>)}</tr>)}</tbody></table></div>
+                      <div className="flex gap-2 mt-2"><Button variant="success" size="sm" onClick={handleConfirmImport}>确认导入 {importPreview.length} 条</Button><Button variant="secondary" size="sm" onClick={() => { setImportPreview(null); setImportStatus(""); }}>取消</Button></div>
+                    </div>}
+                  </Card>}
+
+                  {/* 数据重置 */}
+                  {hasPermission("user_manage") && <Card className="p-4 sm:p-6 border-red-200">
+                    <h3 className="text-base font-semibold text-red-700 mb-2">数据重置</h3>
+                    <p className="text-xs text-gray-500 mb-3">将所有数据恢复为初始示例数据。此操作不可撤销，请先导出备份。</p>
+                    <Button variant="danger" size="sm" onClick={() => setConfirmDialog({ open: true, title: "确认重置数据", message: "此操作将清除所有数据并恢复为示例数据，确定要继续吗？建议先导出备份。", onConfirm: handleClearAllData })}>重置为初始数据</Button>
+                  </Card>}
+                </div>}
+
               </div>}
 
             </div>
