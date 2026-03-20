@@ -5,7 +5,15 @@ compatibility_date = "2024-09-25"
 [vars]
 ALLOWED_ORIGINS = "https://chaoliuzhu65-tech.github.io,http://localhost:5173"
 
-# 以下敏感变量通过 Cloudflare Dashboard 的 Secrets 设置，不要写在这里
-# FEISHU_APP_ID = "cli_xxxxxxxxxx"
-# FEISHU_APP_SECRET = "xxxxxxxxxxxxxxxx"
-# BITABLE_APP_TOKEN = "xxxxxxxxxxxxxxx"
+# KV 命名空间 — 用于缓存 token 和追踪 API 用量
+# 创建命令: wrangler kv namespace create TOKEN_CACHE
+# 获得 id 后填入下方
+# [[kv_namespaces]]
+# binding = "TOKEN_CACHE"
+# id = "<创建后得到的ID>"
+
+# 以下敏感变量通过 wrangler secret put 命令设置：
+# wrangler secret put FEISHU_APP_ID       → cli_a93aa1cc63389cee
+# wrangler secret put FEISHU_APP_SECRET   → KOIpik0vS2wOJIBKyIwtTdIoKBB4sXNp
+# wrangler secret put BITABLE_APP_TOKEN   → 创建多维表格后获得的 app_token
+# wrangler secret put PROXY_API_KEY       → 自定义一个前端访问密钥（可选）

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import _ from "lodash";
 import * as XLSX from "xlsx";
-import { getBitableConfig, saveBitableConfig, isBitableEnabled, testBitableConnection, pullAllFromBitable, pushAllToBitable, FIELD_MAPPERS, enqueueWrite, createRecord, updateRecord, deleteRecord, fetchAllRecords } from "./bitableLayer.js";
+import { getBitableConfig, saveBitableConfig, isBitableEnabled, testBitableConnection, pullAllFromBitable, pushAllToBitable, FIELD_MAPPERS, enqueueWrite, createRecord, updateRecord, deleteRecord, fetchAllRecords, getApiUsage } from "./bitableLayer.js";
 
 // ==================== 数据模型与常量 ====================
 const HOTEL_INFO = { name: "天津开元酒店", group: "德胧集团", code: "TJKY", address: "天津市滨海新区开元大道88号", lat: 39.0842, lng: 117.2005, phone: "022-88888888", coverImg: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" };
@@ -1634,8 +1634,9 @@ export default function App() {
                     </div>
                     <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                       <p className="text-xs text-amber-800 font-medium">注意事项</p>
-                      <p className="text-xs text-amber-700 mt-1">当前数据存储在浏览器 localStorage 中。清除浏览器缓存或更换设备/浏览器后数据不会自动同步。建议定期导出数据备份。后续版本将支持云端数据库（阿里云 MySQL 或飞书多维表格）实现多端同步。</p>
+                      <p className="text-xs text-amber-700 mt-1">{isBitableEnabled() ? "飞书免费版每月限1万次API调用。如出现数据读写异常请首先排查此限额。升级飞书商业版可获100万次/月。" : "当前数据存储在浏览器 localStorage 中。清除浏览器缓存后数据不会同步。建议配置飞书数据源实现云端持久化。"}</p>
                     </div>
+                    {isBitableEnabled() && <div className="mt-3"><Button variant="secondary" size="sm" onClick={async () => { try { const u = await getApiUsage(); if(u) setBitableStatus(`今日API调用: ${u.apiCalls}次 (月限额约1万次)`); else setBitableStatus("未配置KV，无法追踪用量"); } catch(e) { setBitableStatus("查询失败: "+e.message); } }}>查询API用量</Button>{bitableStatus && <p className="text-xs text-gray-600 mt-2">{bitableStatus}</p>}</div>}
                   </Card>
 
                   {/* 数据导出 */}
