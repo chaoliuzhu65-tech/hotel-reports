@@ -87,7 +87,15 @@ async function getAccessToken(env) {
 
 function corsHeaders(request, env) {
   const origin = request.headers.get("Origin") || "";
-  const allowed = (env.ALLOWED_ORIGINS || "").split(",").map(s => s.trim());
+  // 默认允许的域名列表（开发+生产）
+  const defaults = [
+    "https://chaoliuzhu65-tech.github.io",
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:5173",
+  ];
+  const extra = (env.ALLOWED_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
+  const allowed = [...defaults, ...extra];
   const isAllowed = allowed.some(a => origin === a || a === "*");
 
   return {

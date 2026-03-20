@@ -111,6 +111,50 @@ export async function syncUpload(tableId, recordsFields) {
   return apiCall("POST", `/api/sync/${tableId}`, { records });
 }
 
+// ==================== 自动发现表格 ====================
+
+/**
+ * 从飞书多维表格 API 获取所有数据表并自动匹配 table_id
+ * 根据表名匹配: 场地信息→venues, 预订记录→bookings, 客房预订→roomBookings, 操作日志→auditLogs
+ */
+export async function discoverTables() {
+  const resp = await apiCall("GET", "/api/tables");
+  if (resp.code !== 0) {
+    throw new Error(resp.msg || `飞书API错误 (code: ${resp.code})`);
+  }
+
+  const tables = resp.data?.items || [];
+  const nameMap = {
+    "场地信息": "venues", "场地": "venues", "venues": "venues",
+    "预订记录": "bookings", "预订": "bookings", "bookings": "bookings",
+    "客房预订": "roomBookings", "客房": "roomBookings", "rooms": "roomBookings", "room_bookings": "roomBookings",
+    "操作日志": "auditLogs", "日志": "auditLogs", "logs": "auditLogs", "audit_logs": "auditLogs",
+  };
+
+  const discovered = { venues: "", bookings: "", roomBookings: "", auditLogs: "" };
+  const tableInfo = [];
+
+  for (const t of tables) {
+    const name = t.name || "";
+    const id = t.table_id || "";
+    tableInfo.push({ name, id });
+
+    // 精确匹配
+    if (nameMap[name]) {
+      discovered[nameMap[name]] = id;
+    } else {
+      // 模糊匹配
+      const lower = name.toLowerCase();
+      if (lower.includes("场地") || lower.includes("venue")) discovered.venues = discovered.venues || id;
+      else if (lower.includes("预订") || lower.includes("booking")) discovered.bookings = discovered.bookings || id;
+      else if (lower.includes("客房") || lower.includes("room")) discovered.roomBookings = discovered.roomBookings || id;
+      else if (lower.includes("日志") || lower.includes("log") || lower.includes("audit")) discovered.auditLogs = discovered.auditLogs || id;
+    }
+  }
+
+  return { tableIds: discovered, allTables: tableInfo };
+}
+
 // ==================== API 用量查询 ====================
 
 export async function getApiUsage() {

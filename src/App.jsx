@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import _ from "lodash";
 import * as XLSX from "xlsx";
-import { getBitableConfig, saveBitableConfig, isBitableEnabled, testBitableConnection, pullAllFromBitable, pushAllToBitable, FIELD_MAPPERS, enqueueWrite, createRecord, updateRecord, deleteRecord, fetchAllRecords, getApiUsage } from "./bitableLayer.js";
+import { getBitableConfig, saveBitableConfig, isBitableEnabled, testBitableConnection, pullAllFromBitable, pushAllToBitable, FIELD_MAPPERS, enqueueWrite, createRecord, updateRecord, deleteRecord, fetchAllRecords, getApiUsage, discoverTables } from "./bitableLayer.js";
 
 // ==================== 数据模型与常量 ====================
 const HOTEL_INFO = { name: "天津开元酒店", group: "德胧集团", code: "TJKY", address: "天津市滨海新区开元大道88号", lat: 39.0842, lng: 117.2005, phone: "022-88888888", coverImg: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" };
@@ -991,7 +991,10 @@ export default function App() {
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
   const [logFilter, setLogFilter] = useState("all");
   const [venueSettingsFilter, setVenueSettingsFilter] = useState("ALL");
-  const [bitableFormState, setBitableFormState] = useState(() => getBitableConfig() || { workerUrl: "", tableIds: { venues: "", bookings: "", roomBookings: "", auditLogs: "" } });
+  const [bitableFormState, setBitableFormState] = useState(() => {
+    const saved = getBitableConfig();
+    return saved || { workerUrl: "https://delon-booking-proxy.chaoliuzhu65.workers.dev", apiKey: "", tableIds: { venues: "", bookings: "", roomBookings: "", auditLogs: "" } };
+  });
   const [bitableStatus, setBitableStatus] = useState("");
 
   // ---- 权限检查 ----
@@ -1601,7 +1604,8 @@ export default function App() {
                   <Card className="p-4 sm:p-6 border-blue-200">
                     <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">飞书</div><div><h3 className="text-base font-semibold">飞书多维表格数据源</h3><p className="text-xs text-gray-500">{isBitableEnabled()?"已连接 — 数据持久化到飞书云端":"未配置 — 当前数据仅保存在本地浏览器"}</p></div>{isBitableEnabled()&&<Badge className="bg-green-100 text-green-700 border-green-300 ml-auto">已启用</Badge>}</div>
                     {hasPermission("feishu_config")&&<div className="space-y-3">
-                      <Input label="Worker 代理地址" value={bitableFormState.workerUrl} onChange={v=>setBitableFormState(p=>({...p,workerUrl:v}))} placeholder="https://delon-booking-proxy.your-account.workers.dev" />
+                      <Input label="Worker 代理地址" value={bitableFormState.workerUrl} onChange={v=>setBitableFormState(p=>({...p,workerUrl:v}))} placeholder="https://delon-booking-proxy.chaoliuzhu65.workers.dev" />
+                      <Input label="API 密钥（可选）" value={bitableFormState.apiKey||""} onChange={v=>setBitableFormState(p=>({...p,apiKey:v}))} placeholder="留空则不验证" />
                       <div className="grid grid-cols-2 gap-3">
                         <Input label="场地表 Table ID" value={bitableFormState.tableIds?.venues||""} onChange={v=>setBitableFormState(p=>({...p,tableIds:{...p.tableIds,venues:v}}))} placeholder="tblXXXXXX" />
                         <Input label="预订表 Table ID" value={bitableFormState.tableIds?.bookings||""} onChange={v=>setBitableFormState(p=>({...p,tableIds:{...p.tableIds,bookings:v}}))} placeholder="tblXXXXXX" />
@@ -1609,8 +1613,9 @@ export default function App() {
                         <Input label="日志表 Table ID" value={bitableFormState.tableIds?.auditLogs||""} onChange={v=>setBitableFormState(p=>({...p,tableIds:{...p.tableIds,auditLogs:v}}))} placeholder="tblXXXXXX" />
                       </div>
                       <div className="flex items-center gap-2 pt-2 flex-wrap">
+                        <Button variant="ai" size="sm" onClick={async()=>{if(!bitableFormState.workerUrl){setBitableStatus("请先填写 Worker 代理地址");return;}setBitableStatus("正在自动发现表格...");try{const tmp=getBitableConfig();saveBitableConfig({...bitableFormState});const result=await discoverTables();setBitableFormState(p=>({...p,tableIds:result.tableIds}));saveBitableConfig({...bitableFormState,tableIds:result.tableIds});const found=result.allTables.map(t=>`${t.name}(${t.id})`).join("、");setBitableStatus(`发现 ${result.allTables.length} 张表: ${found}`);if(tmp)saveBitableConfig(tmp)}catch(e){setBitableStatus("发现失败: "+e.message);}}}>自动发现表格</Button>
                         <Button variant="primary" size="sm" onClick={()=>{saveBitableConfig(bitableFormState);setBitableStatus("配置已保存");addLog("FEISHU_CONFIG","飞书数据源","更新飞书多维表格数据源配置")}}>保存配置</Button>
-                        <Button variant="secondary" size="sm" onClick={async()=>{setBitableStatus("测试中...");const r=await testBitableConnection();setBitableStatus(r.success?"连接成功":"连接失败: "+r.message)}}>测试连接</Button>
+                        <Button variant="secondary" size="sm" onClick={async()=>{setBitableStatus("测试中...");const tmpCfg=getBitableConfig();saveBitableConfig(bitableFormState);const r=await testBitableConnection();if(tmpCfg)saveBitableConfig(tmpCfg);setBitableStatus(r.success?`连接成功 (Worker v${r.version})`:"连接失败: "+r.message)}}>测试连接</Button>
                         {isBitableEnabled()&&<Button variant="warning" size="sm" onClick={async()=>{if(!confirm("将本地数据上传到飞书多维表格？（已有数据不会被覆盖）"))return;setBitableStatus("正在上传...");try{const cfg=getBitableConfig();const localData={venues,bookings,roomBookings,auditLogs};const r=await pushAllToBitable(localData);setBitableStatus("上传完成");addLog("SETTINGS_CHANGE","数据同步","本地数据已同步到飞书多维表格")}catch(e){setBitableStatus("上传失败: "+e.message)}}}>上传本地数据到飞书</Button>}
                         {isBitableEnabled()&&<Button variant="ai" size="sm" onClick={async()=>{if(!confirm("从飞书拉取数据将覆盖本地数据，确定继续？"))return;setBitableStatus("正在拉取...");try{const data=await pullAllFromBitable();if(data.venues)setVenues(data.venues);if(data.bookings)setBookings(data.bookings);if(data.roomBookings)setRoomBookings(data.roomBookings);if(data.auditLogs)setAuditLogs(data.auditLogs);setBitableStatus("拉取完成，已更新本地数据");addLog("SETTINGS_CHANGE","数据同步","从飞书多维表格拉取数据到本地")}catch(e){setBitableStatus("拉取失败: "+e.message)}}}>从飞书拉取数据</Button>}
                       </div>
