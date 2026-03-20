@@ -146,10 +146,25 @@ const nowTimestamp = () => { const n = new Date(); return fmt(n) + " " + fmtTime
 
 // ==================== 数据持久化 (localStorage) ====================
 const STORAGE_KEY = "delon_booking_system_v2";
-const saveToStorage = (key, data) => { try { const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); all[key] = data; all._lastSaved = new Date().toISOString(); localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch(e) { console.warn("存储失败:", e); } };
+const DATA_VERSION = 3; // v3: 增加 username/password/feishuId 字段
+const saveToStorage = (key, data) => { try { const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); all[key] = data; all._lastSaved = new Date().toISOString(); all._dataVersion = DATA_VERSION; localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch(e) { console.warn("存储失败:", e); } };
 const loadFromStorage = (key, fallback) => { try { const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); return all[key] !== undefined ? all[key] : fallback; } catch(e) { return fallback; } };
 const clearStorage = () => { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} };
 const getStorageInfo = () => { try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return { size: 0, lastSaved: null }; return { size: new Blob([raw]).size, lastSaved: JSON.parse(raw)._lastSaved || null }; } catch(e) { return { size: 0, lastSaved: null }; } };
+
+// 数据迁移: 如果旧版用户数据没有 username 字段，合并新默认值
+const migrateUsers = (storedUsers) => {
+  if (!storedUsers || !Array.isArray(storedUsers)) return SAMPLE_USERS;
+  // 检测旧版数据（没有 username 字段）
+  const needsMigration = storedUsers.some(u => !u.username);
+  if (!needsMigration) return storedUsers;
+  // 合并: 保留旧数据的自定义字段，补充新字段
+  return storedUsers.map(u => {
+    if (u.username) return u;
+    const defaultUser = SAMPLE_USERS.find(d => d.id === u.id);
+    return { ...u, username: defaultUser?.username || u.id, password: defaultUser?.password || "1234", feishuId: defaultUser?.feishuId || "" };
+  });
+};
 
 // ==================== 图片压缩上传 ====================
 const MAX_IMG_SIZE = 500 * 1024; // 500KB
@@ -962,11 +977,11 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // ---- 新增: 权限/用户/日志/配置 状态 (持久化) ----
-  const [users, setUsers] = useState(() => loadFromStorage("users", SAMPLE_USERS));
+  const [users, setUsers] = useState(() => migrateUsers(loadFromStorage("users", SAMPLE_USERS)));
   const [currentUser, setCurrentUser] = useState(() => {
     const session = loadSession();
     if (session) {
-      const stored = loadFromStorage("users", SAMPLE_USERS);
+      const stored = migrateUsers(loadFromStorage("users", SAMPLE_USERS));
       const u = stored.find(u => u.id === session.userId && u.status === "active");
       if (u) return u;
     }
