@@ -302,6 +302,94 @@ const VenueCalendarGrid = ({ date, venues, bookings, onCellClick, onBookingClick
   );
 };
 
+// ==================== 全景日历（多日×多场地矩阵视图） ====================
+const VenuePanoramicGrid = ({ venues, bookings, startDate, endDate, onBookingClick, venueFilter }) => {
+  const filtered = venueFilter==="ALL" ? venues.filter(v=>v.status==="active") : venues.filter(v => v.type===venueFilter && v.status==="active");
+  const grouped = _.groupBy(filtered, "type");
+  const tl = { BANQUET: "宴会厅", MEETING: "会议室", PRIVATE: "包厢" };
+  const tc = { BANQUET: "bg-rose-50 text-rose-700", MEETING: "bg-blue-50 text-blue-700", PRIVATE: "bg-amber-50 text-amber-700" };
+  const slotColors = { morning: "#F59E0B", noon: "#3B82F6", afternoon: "#10B981", evening: "#8B5CF6" };
+  const slotLabels = { morning: "上午", noon: "中午", afternoon: "下午", evening: "晚上" };
+
+  // 生成日期列
+  const dates = [];
+  let cur = new Date(startDate);
+  const end = new Date(endDate);
+  while (cur <= end) { dates.push(fmt(cur)); cur = new Date(cur.getTime() + 86400000); }
+
+  // 星期名
+  const weekDay = (ds) => ["日","一","二","三","四","五","六"][new Date(ds).getDay()];
+  const isWeekend = (ds) => { const d = new Date(ds).getDay(); return d === 0 || d === 6; };
+
+  return (
+    <div className="overflow-auto border border-gray-200 rounded-xl bg-white" style={{maxHeight: "calc(100vh - 220px)"}}>
+      <table className="border-collapse text-xs" style={{minWidth: Math.max(700, dates.length * 90 + 120)}}>
+        <thead className="sticky top-0 z-20 bg-white">
+          {/* 月份行 */}
+          <tr>{/* 空白场地列 */}<th className="border border-gray-200 bg-gray-50 px-2 py-1 sticky left-0 z-30 min-w-[110px]" />
+          {dates.map((d, i) => {
+            const isFirst = i === 0 || d.slice(0, 7) !== dates[i - 1]?.slice(0, 7);
+            if (!isFirst) return null;
+            const span = dates.filter(x => x.slice(0, 7) === d.slice(0, 7)).length;
+            return <th key={d + "m"} colSpan={span} className="border border-gray-200 bg-indigo-50 px-2 py-1 text-indigo-700 font-bold text-center">{d.slice(0, 7)}</th>;
+          })}</tr>
+          {/* 日期行 */}
+          <tr><th className="border border-gray-200 bg-gray-50 px-2 py-1.5 text-left font-semibold text-gray-600 sticky left-0 z-30 min-w-[110px]">
+            <div>场地</div>
+            <div className="flex gap-1 mt-1">{DEFAULT_TIME_SLOTS.map(s=><span key={s.id} className="flex items-center gap-0.5"><span className="inline-block w-2 h-2 rounded-sm" style={{backgroundColor:slotColors[s.id]}}/><span className="text-[9px] text-gray-400">{s.label}</span></span>)}</div>
+          </th>
+          {dates.map(d => <th key={d} className={cn("border border-gray-200 px-1 py-1.5 text-center min-w-[80px]", d===todayStr?"bg-indigo-100 text-indigo-700":"bg-gray-50", isWeekend(d)&&d!==todayStr?"bg-orange-50":"")}>
+            <div className="font-bold">{d.slice(8)}</div>
+            <div className={cn("text-[10px]", isWeekend(d)?"text-orange-500 font-medium":"text-gray-400")}>周{weekDay(d)}</div>
+          </th>)}</tr>
+        </thead>
+        <tbody>{Object.entries(grouped).map(([type, vList]) => (
+          <React.Fragment key={type}>
+            <tr><td colSpan={dates.length + 1} className={cn("border border-gray-200 px-2 py-1 text-xs font-bold sticky left-0 z-10", tc[type])}>{tl[type]} ({vList.length})</td></tr>
+            {vList.map(venue => (
+              <tr key={venue.id} className="hover:bg-gray-50/30">
+                <td className="border border-gray-200 px-2 py-1 font-medium text-gray-800 sticky left-0 bg-white z-10 min-w-[110px]">
+                  <div className="text-xs leading-tight">{venue.name}</div>
+                  <div className="text-[10px] text-gray-400">{venue.floor}·{venue.capacity}人</div>
+                </td>
+                {dates.map(d => {
+                  const dayBookings = bookings.filter(b => b.date === d && b.venueId === venue.id && b.status !== "CANCELLED");
+                  const dayLinked = bookings.filter(b => b.date === d && b.linkedVenues?.some(lv => lv.venueId === venue.id) && b.status !== "CANCELLED");
+                  const all = [...dayBookings, ...dayLinked];
+                  // 按时段分组
+                  const slotMap = {};
+                  all.forEach(b => { const sid = b.timeSlotId || "unknown"; if(!slotMap[sid]) slotMap[sid] = []; slotMap[sid].push(b); });
+                  const hasBooking = all.length > 0;
+                  return <td key={d} className={cn("border border-gray-200 px-0.5 py-0.5 align-top cursor-pointer transition-colors", d===todayStr?"bg-indigo-50/30":"", !hasBooking&&"hover:bg-indigo-50/50")} onClick={()=>{ if(all.length>0) onBookingClick(all[0]); }}>
+                    {hasBooking ? (
+                      <div className="space-y-px">
+                        {DEFAULT_TIME_SLOTS.map(slot => {
+                          const sb = slotMap[slot.id];
+                          if (!sb || sb.length === 0) return null;
+                          return sb.map((b, bi) => (
+                            <div key={b.id + bi} className="rounded px-1 py-0.5 cursor-pointer hover:opacity-80" style={{backgroundColor: slotColors[slot.id] + "18", borderLeft: `3px solid ${slotColors[slot.id]}`}} onClick={e=>{e.stopPropagation();onBookingClick(b)}}>
+                              <div className="font-medium text-gray-800 truncate leading-tight" style={{fontSize: "10px"}}>{b.eventName}</div>
+                              <div className="flex items-center gap-1 mt-px">
+                                <span className="text-[9px] font-medium" style={{color: slotColors[slot.id]}}>{slot.label}</span>
+                                <span className="text-[9px] text-gray-400">{b.expectedAttendance}人</span>
+                                {b.totalAmount > 0 && <span className="text-[9px] font-semibold text-indigo-600 ml-auto">{formatMoney(b.totalAmount)}</span>}
+                              </div>
+                            </div>
+                          ));
+                        })}
+                      </div>
+                    ) : null}
+                  </td>;
+                })}
+              </tr>
+            ))}
+          </React.Fragment>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+};
+
 // ==================== 月历 ====================
 const MonthCalendar = ({ bookings, onDateSelect, selectedDate }) => {
   const [cm, setCm] = useState({ year: today.getFullYear(), month: today.getMonth() });
@@ -638,6 +726,9 @@ export default function App() {
   const [venues, setVenues] = useState(SAMPLE_VENUES_INIT);
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [venueFilter, setVenueFilter] = useState("ALL");
+  const [calendarView, setCalendarView] = useState("day"); // "day" | "panoramic"
+  const [panoramicStart, setPanoramicStart] = useState(todayStr);
+  const [panoramicEnd, setPanoramicEnd] = useState(addDays(todayStr, 30));
   const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
   const [roomFilter, setRoomFilter] = useState("all");
   const [kanbanFilter, setKanbanFilter] = useState("all");
@@ -856,17 +947,86 @@ export default function App() {
 
               {/* Calendar */}
               {page==="calendar"&&<div className="space-y-3 sm:space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2"><button onClick={()=>setSelectedDate(addDays(selectedDate,-1))} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">◀</button><input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg" /><button onClick={()=>setSelectedDate(addDays(selectedDate,1))} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">▶</button><Button variant="ghost" size="sm" onClick={()=>setSelectedDate(todayStr)}>今天</Button></div>
-                  <Tabs tabs={[{id:"ALL",label:"全部"},{id:"BANQUET",label:"宴会厅"},{id:"MEETING",label:"会议室"},{id:"PRIVATE",label:"包厢"}]} active={venueFilter} onChange={setVenueFilter} />
+                {/* 工具栏 */}
+                <div className="flex flex-col gap-2">
+                  {/* 第一行: 视图切换 + 场地筛选 */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex bg-gray-100 p-0.5 rounded-lg">
+                        <button onClick={()=>setCalendarView("day")} className={cn("px-3 py-1.5 rounded-md text-sm font-medium transition-all", calendarView==="day"?"bg-white text-indigo-700 shadow-sm":"text-gray-500 hover:text-gray-700")}>📅 日视图</button>
+                        <button onClick={()=>setCalendarView("panoramic")} className={cn("px-3 py-1.5 rounded-md text-sm font-medium transition-all", calendarView==="panoramic"?"bg-white text-indigo-700 shadow-sm":"text-gray-500 hover:text-gray-700")}>🖥️ 全景视图</button>
+                      </div>
+                    </div>
+                    <Tabs tabs={[{id:"ALL",label:"全部"},{id:"BANQUET",label:"宴会厅"},{id:"MEETING",label:"会议室"},{id:"PRIVATE",label:"包厢"}]} active={venueFilter} onChange={setVenueFilter} />
+                  </div>
+
+                  {/* 第二行: 日期控制 */}
+                  {calendarView==="day" ? (
+                    <div className="flex items-center gap-2">
+                      <button onClick={()=>setSelectedDate(addDays(selectedDate,-1))} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">◀</button>
+                      <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg" />
+                      <button onClick={()=>setSelectedDate(addDays(selectedDate,1))} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">▶</button>
+                      <Button variant="ghost" size="sm" onClick={()=>setSelectedDate(todayStr)}>今天</Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-gray-500 font-medium">日期范围:</span>
+                        <input type="date" value={panoramicStart} onChange={e=>{
+                          const s = e.target.value;
+                          setPanoramicStart(s);
+                          // 自动调整结束日期不超过35天
+                          const diff = Math.round((new Date(panoramicEnd) - new Date(s)) / 86400000);
+                          if (diff > 35 || diff < 0) setPanoramicEnd(addDays(s, 30));
+                        }} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg" />
+                        <span className="text-gray-400">→</span>
+                        <input type="date" value={panoramicEnd} onChange={e=>{
+                          const newEnd = e.target.value;
+                          const diff = Math.round((new Date(newEnd) - new Date(panoramicStart)) / 86400000);
+                          if (diff > 35) { alert("最长展示35天，已自动调整"); setPanoramicEnd(addDays(panoramicStart, 35)); }
+                          else if (diff < 1) { alert("结束日期必须晚于开始日期"); }
+                          else setPanoramicEnd(newEnd);
+                        }} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg" />
+                        <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">{Math.round((new Date(panoramicEnd) - new Date(panoramicStart)) / 86400000) + 1}天</span>
+                      </div>
+                      <div className="flex gap-1.5 flex-wrap">
+                        <Button variant="ghost" size="sm" onClick={()=>{setPanoramicStart(todayStr);setPanoramicEnd(addDays(todayStr,6))}}>本周</Button>
+                        <Button variant="ghost" size="sm" onClick={()=>{setPanoramicStart(todayStr);setPanoramicEnd(addDays(todayStr,13))}}>两周</Button>
+                        <Button variant="ghost" size="sm" onClick={()=>{setPanoramicStart(todayStr);setPanoramicEnd(addDays(todayStr,30))}}>本月</Button>
+                        <Button variant="ghost" size="sm" onClick={()=>{setPanoramicStart(todayStr);setPanoramicEnd(addDays(todayStr,35))}}>35天</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-col lg:flex-row gap-4">
+
+                {/* 日视图 */}
+                {calendarView==="day" && <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1 min-w-0"><Card className="overflow-hidden"><VenueCalendarGrid date={selectedDate} venues={venues} bookings={bookings} onCellClick={(v,s,d)=>{setPrefill({venueId:v.id,timeSlotId:s.id,date:d});setShowCreateBooking(true)}} onBookingClick={b=>{setSelectedBooking(b);setShowDetail(true)}} venueFilter={venueFilter} /></Card></div>
                   <div className="w-full lg:w-64 shrink-0">
                     <MonthCalendar bookings={bookings} onDateSelect={setSelectedDate} selectedDate={selectedDate} />
                     <Card className="mt-3 p-3"><h4 className="text-xs font-semibold text-gray-600 mb-2">当日统计</h4>{(()=>{const db=bookings.filter(b=>b.date===selectedDate&&b.status!=="CANCELLED");return<div className="space-y-1.5 text-sm"><div className="flex justify-between"><span className="text-gray-500">预订数</span><span className="font-bold">{db.length}</span></div><div className="flex justify-between"><span className="text-gray-500">总金额</span><span className="font-bold text-indigo-700">{formatMoney(db.reduce((s,b)=>s+b.totalAmount,0))}</span></div><div className="flex justify-between"><span className="text-gray-500">总人次</span><span className="font-bold">{db.reduce((s,b)=>s+b.expectedAttendance,0)}</span></div></div>})()}</Card>
                   </div>
-                </div>
+                </div>}
+
+                {/* 全景视图 */}
+                {calendarView==="panoramic" && <div>
+                  {/* 统计概览条 */}
+                  {(()=>{
+                    const rangeBookings = bookings.filter(b => b.date >= panoramicStart && b.date <= panoramicEnd && b.status !== "CANCELLED");
+                    const days = Math.round((new Date(panoramicEnd) - new Date(panoramicStart)) / 86400000) + 1;
+                    const activeVenues = venues.filter(v => v.status === "active").length;
+                    const totalSlots = days * activeVenues * 4;
+                    const usedSlots = rangeBookings.length;
+                    const utilRate = totalSlots > 0 ? Math.round(usedSlots / totalSlots * 100) : 0;
+                    return <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                      <div className="bg-indigo-50 rounded-lg px-3 py-2"><p className="text-[10px] text-indigo-500">预订总数</p><p className="text-lg font-bold text-indigo-700">{rangeBookings.length}</p></div>
+                      <div className="bg-green-50 rounded-lg px-3 py-2"><p className="text-[10px] text-green-500">总营收</p><p className="text-lg font-bold text-green-700">{formatMoney(rangeBookings.reduce((s,b)=>s+b.totalAmount,0))}</p></div>
+                      <div className="bg-violet-50 rounded-lg px-3 py-2"><p className="text-[10px] text-violet-500">场地使用率</p><p className="text-lg font-bold text-violet-700">{utilRate}%</p></div>
+                      <div className="bg-amber-50 rounded-lg px-3 py-2"><p className="text-[10px] text-amber-500">展示范围</p><p className="text-lg font-bold text-amber-700">{days}天</p></div>
+                    </div>;
+                  })()}
+                  <VenuePanoramicGrid venues={venues} bookings={bookings} startDate={panoramicStart} endDate={panoramicEnd} onBookingClick={b=>{setSelectedBooking(b);setShowDetail(true)}} venueFilter={venueFilter} />
+                </div>}
               </div>}
 
               {/* Bookings */}
