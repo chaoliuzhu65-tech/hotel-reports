@@ -1007,8 +1007,14 @@ export default function App() {
   const [logFilter, setLogFilter] = useState("all");
   const [venueSettingsFilter, setVenueSettingsFilter] = useState("ALL");
   const [bitableFormState, setBitableFormState] = useState(() => {
+    const defaults = { workerUrl: "https://delon-booking-proxy.chaoliuzhu65.workers.dev", apiKey: "", tableIds: { venues: "tblFGqSpTqm0gp8R", bookings: "tblptEIgZ7Pa7Zqz", roomBookings: "tblRGkQHwWLnwEFJ", auditLogs: "tbllGFZv846HYmLW" } };
     const saved = getBitableConfig();
-    return saved || { workerUrl: "https://delon-booking-proxy.chaoliuzhu65.workers.dev", apiKey: "", tableIds: { venues: "", bookings: "", roomBookings: "", auditLogs: "" } };
+    if (!saved) return defaults;
+    // 如果保存的配置里 tableIds 全是空的，用默认值覆盖
+    const ids = saved.tableIds || {};
+    const allEmpty = !ids.venues && !ids.bookings && !ids.roomBookings && !ids.auditLogs;
+    if (allEmpty) return { ...saved, tableIds: defaults.tableIds };
+    return saved;
   });
   const [bitableStatus, setBitableStatus] = useState("");
 
