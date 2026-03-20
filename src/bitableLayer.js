@@ -166,7 +166,7 @@ export async function getApiUsage() {
 // ==================== 字段映射 ====================
 
 const venueToFields = (v) => ({
-  id: v.id || "",
+  _id: v.id || "",
   name: v.name || "",
   type: { BANQUET: "宴会厅", MEETING: "会议室", PRIVATE: "包厢" }[v.type] || v.type,
   floor: v.floor || "",
@@ -184,7 +184,7 @@ const fieldsToVenue = (record) => {
   const f = record.fields;
   const typeMap = { "宴会厅": "BANQUET", "会议室": "MEETING", "包厢": "PRIVATE" };
   return {
-    id: f.id || record.record_id,
+    id: f._id || record.record_id,
     _recordId: record.record_id,
     name: f.name || "",
     type: typeMap[f.type] || "MEETING",
@@ -207,7 +207,7 @@ const fieldsToVenue = (record) => {
 };
 
 const bookingToFields = (b) => ({
-  id: b.id || "",
+  _id: b.id || "",
   number: b.number || "",
   type: { MEETING: "会议", BANQUET: "宴会", WEDDING: "婚宴", PRIVATE_DINING: "包厢宴请", ROOM: "客房" }[b.type] || b.type,
   venue_id: b.venueId || "",
@@ -256,7 +256,7 @@ const fieldsToBooking = (record) => {
   try { roomBookings = JSON.parse(f.room_bookings_json || "[]"); } catch {}
 
   return {
-    id: f.id || record.record_id,
+    id: f._id || record.record_id,
     _recordId: record.record_id,
     number: f.number || "",
     type: typeMap[f.type] || "MEETING",
@@ -289,7 +289,7 @@ const fieldsToBooking = (record) => {
 };
 
 const roomToFields = (r) => ({
-  id: r.id || "",
+  _id: r.id || "",
   guest_name: r.guestName || "",
   phone: r.phone || "",
   check_in: r.checkIn ? new Date(r.checkIn).getTime() : null,
@@ -314,7 +314,7 @@ const fieldsToRoom = (record) => {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   };
   return {
-    id: f.id || record.record_id,
+    id: f._id || record.record_id,
     _recordId: record.record_id,
     guestName: f.guest_name || "",
     phone: f.phone || "",
