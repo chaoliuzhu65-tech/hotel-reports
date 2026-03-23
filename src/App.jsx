@@ -18,6 +18,7 @@ const DEFAULT_TIME_SLOTS = [
 ];
 
 const DEPARTMENTS = [
+  { id: "management", name: "管理层", icon: "👑" },
   { id: "frontdesk", name: "前厅部", icon: "🏨" }, { id: "fb", name: "餐饮部", icon: "🍽️" },
   { id: "marketing", name: "市场传讯部", icon: "📢" }, { id: "engineering", name: "工程部", icon: "🔧" },
   { id: "security", name: "安保部", icon: "🛡️" }, { id: "finance", name: "财务部", icon: "💰" },
@@ -71,7 +72,8 @@ const DEFAULT_ROLES = [
 ];
 
 const SAMPLE_USERS = [
-  { id: "u001", name: "夏美娟", phone: "13802134933", dept: "marketing", role: "admin", avatar: "夏", status: "active", createdAt: "2024-01-01", username: "admin", password: "1234", feishuId: "" },
+  { id: "u000", name: "系统管理员", phone: "", dept: "management", role: "admin", avatar: "管", status: "active", createdAt: "2024-01-01", username: "admin", password: "1234", feishuId: "" },
+  { id: "u001", name: "夏美娟", phone: "13802134933", dept: "marketing", role: "admin", avatar: "夏", status: "active", createdAt: "2024-01-01", username: "xiameijuan", password: "1234", feishuId: "" },
   { id: "u002", name: "李勋", phone: "13800000000", dept: "marketing", role: "sales", avatar: "李", status: "active", createdAt: "2024-03-15", username: "lixun", password: "1234", feishuId: "" },
   { id: "u003", name: "王丽", phone: "13800000001", dept: "marketing", role: "sales", avatar: "王", status: "active", createdAt: "2024-06-01", username: "wangli", password: "1234", feishuId: "" },
   { id: "u004", name: "刘强", phone: "13800000002", dept: "fb", role: "manager", avatar: "刘", status: "active", createdAt: "2024-02-10", username: "liuqiang", password: "1234", feishuId: "" },
@@ -152,18 +154,26 @@ const loadFromStorage = (key, fallback) => { try { const all = JSON.parse(localS
 const clearStorage = () => { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} };
 const getStorageInfo = () => { try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return { size: 0, lastSaved: null }; return { size: new Blob([raw]).size, lastSaved: JSON.parse(raw)._lastSaved || null }; } catch(e) { return { size: 0, lastSaved: null }; } };
 
-// 数据迁移: 如果旧版用户数据没有 username 字段，合并新默认值
+// 数据迁移: 处理旧版用户数据 + 确保新增的系统用户被加入
 const migrateUsers = (storedUsers) => {
   if (!storedUsers || !Array.isArray(storedUsers)) return SAMPLE_USERS;
-  // 检测旧版数据（没有 username 字段）
-  const needsMigration = storedUsers.some(u => !u.username);
-  if (!needsMigration) return storedUsers;
-  // 合并: 保留旧数据的自定义字段，补充新字段
-  return storedUsers.map(u => {
-    if (u.username) return u;
-    const defaultUser = SAMPLE_USERS.find(d => d.id === u.id);
-    return { ...u, username: defaultUser?.username || u.id, password: defaultUser?.password || "1234", feishuId: defaultUser?.feishuId || "" };
+  // 修复旧版 u001 夏美娟的 username 从 "admin" 改为 "xiameijuan"
+  let migrated = storedUsers.map(u => {
+    if (u.id === "u001" && u.username === "admin") {
+      return { ...u, username: "xiameijuan" };
+    }
+    if (!u.username) {
+      const defaultUser = SAMPLE_USERS.find(d => d.id === u.id);
+      return { ...u, username: defaultUser?.username || u.id, password: defaultUser?.password || "1234", feishuId: defaultUser?.feishuId || "" };
+    }
+    return u;
   });
+  // 确保 u000 系统管理员存在（旧版缓存中没有这条记录）
+  if (!migrated.find(u => u.id === "u000")) {
+    const sysAdmin = SAMPLE_USERS.find(u => u.id === "u000");
+    if (sysAdmin) migrated = [sysAdmin, ...migrated];
+  }
+  return migrated;
 };
 
 // ==================== 图片压缩上传 ====================
