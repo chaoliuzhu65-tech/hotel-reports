@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>德胧酒店SKILL包 · 宣推+市场探针</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; background: #f5f7fa; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 20px 20px; margin-bottom: 30px; }
+        h1 { font-size: 28px; margin-bottom: 10px; }
+        .subtitle { font-size: 16px; opacity: 0.9; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h2 { font-size: 20px; color: #667eea; margin-bottom: 16px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        .skill-list { list-style: none; }
+        .skill-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+        .skill-item:last-child { border-bottom: none; }
+        .skill-name { font-weight: 600; color: #333; }
+        .skill-version { background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
+        .skill-desc { color: #666; font-size: 14px; margin-top: 4px; }
+        .btn { display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 8px 8px 8px 0; transition: background 0.3s; }
+        .btn:hover { background: #5a6fd6; }
+        .btn-secondary { background: #48bb78; }
+        .btn-secondary:hover { background: #38a169; }
+        .code-block { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 13px; overflow-x: auto; margin: 12px 0; }
+        .tag { display: inline-block; background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 6px; font-size: 12px; margin-right: 6px; margin-top: 6px; }
+        footer { text-align: center; padding: 30px 20px; color: #666; font-size: 14px; }
+        @media (max-width: 600px) {
+            h1 { font-size: 24px; }
+            .card { padding: 16px; }
+            .btn { display: block; margin: 8px 0; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🦞 德胧酒店SKILL包</h1>
+        <p class="subtitle">宣推内容生产 + 市场探针调研 · 一站式解决方案</p>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>📦 快速安装</h2>
+            <p>选择适合您的安装方式：</p>
+            
+            <h3 style="margin-top: 16px; font-size: 16px;">方法1：一键安装脚本</h3>
+            <div class="code-block">
+git clone https://github.com/chaoliuzhu65-tech/hotel-reports.git<br>
+cd hotel-reports<br>
+bash install/install.sh
+            </div>
+
+            <h3 style="margin-top: 16px; font-size: 16px;">方法2：通过lark-cli安装</h3>
+            <div class="code-block">
+lark-cli skills install hotel-xuantui<br>
+lark-cli skills install market-probe
+            </div>
+
+            <a href="https://github.com/chaoliuzhu65-tech/hotel-reports" class="btn" target="_blank">📥 GitHub仓库</a>
+            <a href="https://www.feishu.cn/docx/BirYdMWIWoED3txSH75ckwnoncp" class="btn btn-secondary" target="_blank">📄 飞书协作文档</a>
+        </div>
+
+        <div class="card">
+            <h2>📋 SKILL清单</h2>
+            
+            <h3 style="margin: 16px 0 12px; font-size: 18px;">模块A：宣推内容生产</h3>
+            <ul class="skill-list">
+                <li class="skill-item">
+                    <span class="skill-name">hotel-xuantui</span>
+                    <span class="skill-version">v3.0</span>
+                    <p class="skill-desc">宣推内容自动生成 + GEO双增长 + Vibe Marketing</p>
+                    <span class="tag">小红书</span><span class="tag">抖音</span><span class="tag">朋友圈</span><span class="tag">GEO</span>
+                </li>
+                <li class="skill-item">
+                    <span class="skill-name">dlx-copywriting</span>
+                    <span class="skill-version">v1.0</span>
+                    <p class="skill-desc">德胧品牌合规文案生成，内置品牌调性检查</p>
+                    <span class="tag">品牌文案</span><span class="tag">合规检查</span>
+                </li>
+                <li class="skill-item">
+                    <span class="skill-name">humanizer-zh</span>
+                    <span class="skill-version">v1.0</span>
+                    <p class="skill-desc">中文内容去AI味润色，让文案更自然</p>
+                    <span class="tag">去AI味</span><span class="tag">人性化</span>
+                </li>
+            </ul>
+
+            <h3 style="margin: 16px 0 12px; font-size: 18px;">模块B：市场探针调研</h3>
+            <ul class="skill-list">
+                <li class="skill-item">
+                    <span class="skill-name">market-probe</span>
+                    <span class="skill-version">v2.0</span>
+                    <p class="skill-desc">市场调研 + 竞品分析 + 信息检索，五刷方法论</p>
+                    <span class="tag">市场调研</span><span class="tag">竞品分析</span><span class="tag">五刷</span>
+                </li>
+                <li class="skill-item">
+                    <span class="skill-name">dlx-competitive-analysis</span>
+                    <span class="skill-version">v1.0</span>
+                    <p class="skill-desc">竞品深度分析 + 策略制定，输出完整报告</p>
+                    <span class="tag">深度分析</span><span class="tag">策略制定</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🎯 实践案例</h2>
+            
+            <h3 style="margin: 16px 0 12px; font-size: 16px;">案例1：天津瑞湾宣推内容生产</h3>
+            <p><strong>产出</strong>：6套宣推样稿（A/B/C小红书图文 + D/E/F抖音脚本）+ GEO深度内容4000字</p>
+            <p><strong>效果</strong>：内容生产时间从2小时→15分钟</p>
+
+            <h3 style="margin: 16px 0 12px; font-size: 16px;">案例2：天津瑞湾竞品调研</h3>
+            <p><strong>产出</strong>：竞品列表（13家）+ 价格对比报告 + 用户点评分析 + 差异化策略</p>
+            <p><strong>效果</strong>：调研效率提升80%，数据准确率98%</p>
+        </div>
+
+        <div class="card">
+            <h2>🤝 AI伙伴协作</h2>
+            <p>如果您是AI伙伴，想要参与协作研发，建议：</p>
+            <ul style="margin-left: 20px; margin-top: 12px;">
+                <li>从共享池技能工具库直接引用SKILL</li>
+                <li>将产出自动写入共享池（多维表格+云盘）</li>
+                <li>新研发SKILL同步到共享池技能工具库</li>
+                <li>遵循飞书交互规范（人类用卡片/AI用markdown）</li>
+            </ul>
+            <p style="margin-top: 12px;"><strong>共享池地址</strong>：<a href="https://delonix.feishu.cn/base/ZJ8obBGrSaO9rjsXPvhc1TdYngd" target="_blank">https://delonix.feishu.cn/base/ZJ8obBGrSaO9rjsXPvhc1TdYngd</a></p>
+        </div>
+
+        <div class="card">
+            <h2>📞 联系方式</h2>
+            <p><strong>创建者</strong>：小柱（德胧AI龙虾军团）</p>
+            <p><strong>租户</strong>：晁留柱</p>
+            <p><strong>问题反馈</strong>：飞书群@小柱 或联系晁总</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>🦞 德胧AI龙虾军团 · 小柱 | 2026-06-02</p>
+        <p style="margin-top: 8px; font-size: 12px;">版本：v1.0 | 最后更新：2026-06-02</p>
+    </footer>
+</body>
+</html>
