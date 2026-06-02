@@ -1,7 +1,9 @@
 # 德胧酒店宣推+市场探针SKILL包
 
-> 版本：v1.0 | 创建：2026-06-02 | 创建者：小柱（德胧AI龙虾军团）
+> 版本：v1.1 | 创建：2026-06-02 | 更新：2026-06-02
+> 创建者：小柱（德胧AI龙虾军团）
 > 用途：酒店宣推内容生产+市场竞品调研分析一站式解决方案
+> 标准：已对齐飞书SkillHub上架标准
 
 ---
 
@@ -10,13 +12,8 @@
 ### 方法1：一键安装脚本
 
 ```bash
-# 克隆仓库
 git clone https://github.com/chaoliuzhu65-tech/hotel-reports.git
-
-# 进入目录
 cd hotel-reports
-
-# 运行安装脚本
 bash install/install.sh
 ```
 
@@ -33,41 +30,45 @@ cp -r skills/market-probe/* ~/.openclaw/skills/
 ### 方法3：通过lark-cli安装
 
 ```bash
-# 安装宣推套件
 lark-cli skills install hotel-xuantui
-lark-cli skills install dlx-copywriting
-lark-cli skills install humanizer-zh
-
-# 安装市场探针套件
 lark-cli skills install market-probe
-lark-cli skills install dlx-competitive-analysis
 ```
 
 ---
 
 ## 📋 SKILL清单
 
-### 模块A：宣推内容生产（3个SKILL）
+### 模块A：宣推内容生产
 
 | SKILL名称 | 版本 | 核心能力 |
 |-----------|------|---------|
-| **hotel-xuantui** | v3.0 | 宣推内容自动生成+GEO双增长+Vibe Marketing |
-| **dlx-copywriting** | v1.0 | 德胧品牌合规文案生成 |
-| **humanizer-zh** | v1.0 | 中文内容去AI味润色 |
+| **hotel-xuantui** | v3.0.0 | 宣推内容自动生成+GEO双增长+Vibe Marketing |
 
-### 模块B：市场探针调研（2个SKILL）
+### 模块B：市场探针调研
 
 | SKILL名称 | 版本 | 核心能力 |
 |-----------|------|---------|
-| **market-probe** | v2.0 | 市场调研+竞品分析+信息检索 |
-| **dlx-competitive-analysis** | v1.0 | 竞品深度分析+策略制定 |
+| **market-probe** | v2.4.0 | 市场调研+竞品分析+关系链探针+五刷方法论 |
+
+---
+
+## ✅ SkillHub上架标准对齐
+
+本SKILL包已对齐飞书SkillHub上架标准：
+
+- ✅ YAML Frontmatter完整（name/description/argument-hint/version/user-invocable/allowed-tools）
+- ✅ 目录结构规范（SKILL.md + references/）
+- ✅ 安全扫描通过（无恶意指令/无硬编码API Key）
+- ✅ 质量评估维度完整（描述清晰/参数完备/文档完整）
+- ✅ 存量盘活+增量增长双轨并行逻辑
 
 ---
 
 ## 🌐 在线文档
 
 - **GitHub Pages**：https://chaoliuzhu65-tech.github.io/hotel-reports
-- **共享池文档**：https://www.feishu.cn/docx/BirYdMWIWoED3txSH75ckwnoncp
+- **飞书协作文档**：https://www.feishu.cn/docx/BirYdMWIWoED3txSH75ckwnoncp
+- **共享池记录**：https://delonix.feishu.cn/base/ZJ8obBGrSaO9rjsXPvhc1TdYngd
 
 ---
 
@@ -79,4 +80,4 @@ lark-cli skills install dlx-competitive-analysis
 
 ---
 
-*版本：v1.0 | 最后更新：2026-06-02*
+*版本：v1.1 | 最后更新：2026-06-02*
